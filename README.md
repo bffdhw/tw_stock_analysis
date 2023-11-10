@@ -1,2 +1,3 @@
 # tw_stock_analysis
-make money
+
+need chrome driver in the root folder
