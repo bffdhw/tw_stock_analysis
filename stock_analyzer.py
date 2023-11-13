@@ -21,7 +21,7 @@ class StockAnalizer :
         plt.ylabel(f"{y_label}")
         plt.gca().set_xticks(data[x_label].unique())
     
-    def predict(self, data, x_label, y_label, stk_id):
+    def predict(self, data, x_label, y_label):
     
         x = np.array(data[x_label])
         y = np.array(data[y_label])
@@ -54,7 +54,7 @@ class StockAnalizer :
         return w_1, mae
         
         
-    def save_fig(self, indicator_name, stk_id):
+    def save_fig(self, indicator_name, stk_id, ):
         
         filepath = os.path.join(self.plot_folder, f"{stk_id}")
         os.makedirs(filepath, exist_ok=True)
@@ -111,15 +111,25 @@ class StockAnalizer :
 
         for stk_id in stk_list :
         
-            dividend_history, profit_indicator, balance_sheet = self.load_data(stk_id=stk_id)
+            dividend_history, profit_indicator, balance_sheet, daily_close = self.load_data(stk_id=stk_id)
             
             # dividend_history = self.process_dividend_history(dividend_history=dividend_history)
             profit_indicator = self.process_profit_indicator(profit_indicator=profit_indicator.copy(), stk_id=stk_id)
             balance_sheet = self.process_balance_sheet(balance_sheet=balance_sheet.copy())
             
-            profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
-            balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
-            self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])]) 
+            
+            self.start_year = 2002
+            self.end_year = 2011
+            
+            profit_indicator = profit_indicator[(self.start_year<=profit_indicator['years']) & (profit_indicator['years'] <= self.end_year) ].reset_index(drop=True)
+            balance_sheet = balance_sheet[(self.start_year<=balance_sheet['years']) & (balance_sheet['years'] <= self.end_year)].reset_index(drop=True)
+            
+            if profit_indicator['years'][0] == self.start_year and  balance_sheet['years'][0] == self.start_year:
+                profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
+                balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
+                self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])])
+                
+                self.backtest(daily_close=daily_close, stk_id=stk_id) 
 
         performance_folder = os.path.join(self.data_folder, 'performance')
         if not os.path.exists(performance_folder):
@@ -133,7 +143,7 @@ class StockAnalizer :
         result = {}
         for feature in features :
             self.plot_line(data=data, x_label="years", y_label=feature)
-            coef, mae = self.predict(data=data, x_label="years", y_label=feature, stk_id=stk_id)
+            coef, mae = self.predict(data=data, x_label="years", y_label=feature)
             self.save_fig(indicator_name=feature, stk_id=stk_id)
             plt.close('all')
             result.update({f'{feature}_coef' : coef, f'{feature}_mae' : mae})
@@ -144,7 +154,7 @@ class StockAnalizer :
         
         result = []
         
-        for data_type in ['dividend_history', 'profit_indicator', 'balance_sheet']:
+        for data_type in ['dividend_history', 'profit_indicator', 'balance_sheet', 'daily_close']:
             
             data_path = os.path.join(self.data_folder, data_type, f'{stk_id}.csv')
             data_exist = os.path.exists(data_path)
@@ -156,9 +166,28 @@ class StockAnalizer :
         
         return result
     
+    def backtest(self, daily_close, stk_id):
+        backtest_start_date = f'{self.end_year + 1}-01-01'
+        
+        testing_data = daily_close[daily_close['Date'] > backtest_start_date].reset_index(drop=True)
+        
+        first_day_prive = testing_data['Close'].head(1).values[0]
+        testing_data['updn(%)'] = round((testing_data['Close'] - first_day_prive) /first_day_prive*100  , 2)
+        
+        
+        self.plot_line(data=testing_data, x_label="Date", y_label='updn(%)')
+        
+        filepath = os.path.join('./backtest', f"{stk_id}")
+        os.makedirs(filepath, exist_ok=True)
+        
+        plt.title(f'{stk_id}')
+        plt.savefig(os.path.join(filepath, f"{stk_id}"))
+        plt.clf()
+        plt.close('all')
+    
 if __name__ == '__main__':
     
-    stk_list = tw_stock_id.SEMICONDUCTOR
+    stk_list = [2330] #tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
     analyzer.analyze_data(stk_list=stk_list)
     
