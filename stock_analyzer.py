@@ -12,7 +12,7 @@ class StockAnalizer :
         os.makedirs(self.data_folder, exist_ok=True)
         self.plot_folder = os.path.abspath("./plot")
         os.makedirs(self.data_folder, exist_ok=True)
-        self.evaluate = {}
+        self.performance = pd.DataFrame()
     
     def plot_line(self, data, x_label, y_label):
         plt.figure(figsize=(10,10))  # dpi=100, 
@@ -32,7 +32,7 @@ class StockAnalizer :
         model.fit(x, y)
         
         w_0 = model.intercept_
-        w_1 = model.coef_
+        w_1 = round(model.coef_[0], 2)
         
         print('Interception : ', w_0)
         print('Coeficient : ', w_1)
@@ -44,13 +44,14 @@ class StockAnalizer :
         prediction = model.predict(x)
         error = prediction - y
         rmse = (error**2).mean()**0.5
-        mae = abs(error).mean()
-        self.evaluate[f'{stk_id}'] = {'mae' : mae, 'rmse' : rmse}
+        mae = round(abs(error).mean(), 2)
         
         '''
         plot
         '''
         plt.plot(x, prediction, color = 'red')
+        
+        return w_1, mae
         
         
     def save_fig(self, indicator_name, stk_id):
@@ -63,7 +64,7 @@ class StockAnalizer :
         
         plt.clf()
     
-    def process_balance_sheet(self, balance_sheet, stk_id):
+    def process_balance_sheet(self, balance_sheet):
         
         balance_sheet = balance_sheet[["years", "stock" , "current_assets", "current_liabilities"]]
         
@@ -82,29 +83,30 @@ class StockAnalizer :
         return balance_sheet
     
     
-    def process_profit_indicator(self, profit_indicator):
+    def process_profit_indicator(self, profit_indicator, stk_id):
+        
+        profit_indicator = profit_indicator[["years", "revenue(E)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)" , "ROE(%)" , "ROA(%)", "EPS", "up(dolar)", "BPS"]]
         
         for column in profit_indicator.columns:
             profit_indicator.drop(profit_indicator[profit_indicator[column] == "-"].index, inplace = True)
         
-        profit_indicator = profit_indicator[["years", "revenue(E)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)" , "ROE(%)" , "ROA(%)", "EPS", "up(dolar)", "BPS"]].astype(float)
+        profit_indicator = profit_indicator.astype(float)
         
         # sort data by year in descending order
         profit_indicator = profit_indicator[::-1]
         profit_indicator.reset_index(drop=True, inplace=True)
+        profit_indicator['revenue(%)'] = round(profit_indicator['revenue(E)'] / profit_indicator['revenue(E)'].head(1)[0], 2)
         
         return profit_indicator
         
     def process_dividend_history(self, dividend_history):
-    
         dividend_history.drop(dividend_history[dividend_history["cash_dividend_yield(%)"] == "-"].index, inplace = True)
         dividend_history = dividend_history[["years","cash_dividend_yield(%)"]].astype(float).round(2)
-
         return dividend_history
     
     def analyze_data(self, stk_list):
         
-        profit_features = ["revenue(E)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)"]
+        profit_features = ["revenue(%)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)"]
         balance_features = ["current_ratio(%)", "quick_ratio(%)"]
 
         for stk_id in stk_list :
@@ -112,23 +114,31 @@ class StockAnalizer :
             dividend_history, profit_indicator, balance_sheet = self.load_data(stk_id=stk_id)
             
             # dividend_history = self.process_dividend_history(dividend_history=dividend_history)
-            profit_indicator = self.process_profit_indicator(profit_indicator=profit_indicator)
-            balance_sheet = self.process_balance_sheet(balance_sheet=balance_sheet, stk_id=stk_id)
+            profit_indicator = self.process_profit_indicator(profit_indicator=profit_indicator.copy(), stk_id=stk_id)
+            balance_sheet = self.process_balance_sheet(balance_sheet=balance_sheet.copy())
             
-            self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
-            self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
+            profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
+            balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
+            self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])]) 
+
+        performance_folder = os.path.join(self.data_folder, 'performance')
+        if not os.path.exists(performance_folder):
+            os.makedirs(performance_folder)
+            
+        self.performance.to_csv(os.path.join(performance_folder, 'performance.csv'))
+        pass
 
     def plot_trend_line(self, stk_id, data, features):
         
+        result = {}
         for feature in features :
             self.plot_line(data=data, x_label="years", y_label=feature)
-            self.predict(data=data, x_label="years", y_label=feature, stk_id=stk_id)
+            coef, mae = self.predict(data=data, x_label="years", y_label=feature, stk_id=stk_id)
             self.save_fig(indicator_name=feature, stk_id=stk_id)
-                
-        # for feature in balance_features :
-        #     self.plot_line(data=balance_sheet, x_label="years", y_label=feature)
-        #     self.predict(data=balance_sheet, x_label="years", y_label=feature, stk_id=stk_id)
-        #     self.save_fig(indicator_name=feature, stk_id=stk_id)
+            plt.close('all')
+            result.update({f'{feature}_coef' : coef, f'{feature}_mae' : mae})
+        
+        return result
     
     def load_data(self, stk_id):
         
@@ -150,4 +160,5 @@ if __name__ == '__main__':
     
     stk_list = tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
-    analyzer.analyze_data(stk_list=stk_list) 
+    analyzer.analyze_data(stk_list=stk_list)
+    
