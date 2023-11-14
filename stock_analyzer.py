@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 import os
-import tw_stock_id
+import datetime
 import matplotlib.pyplot as plt
+import tw_stock_id
 from sklearn.linear_model import LinearRegression
+from common import DATA_START_YEAR, DATA_END_YEAR
 
 class StockAnalizer :
     
@@ -106,8 +108,9 @@ class StockAnalizer :
     
     def analyze_data(self, stk_list):
         
-        profit_features = ["revenue(%)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)"]
-        balance_features = ["current_ratio(%)", "quick_ratio(%)"]
+        # profit_features = ["revenue(%)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)"]
+        # balance_features = ["current_ratio(%)", "quick_ratio(%)"]
+        profit_features = ["gross_profit(%)", "net_income(%)"]
 
         for stk_id in stk_list :
         
@@ -117,20 +120,19 @@ class StockAnalizer :
             profit_indicator = self.process_profit_indicator(profit_indicator=profit_indicator.copy(), stk_id=stk_id)
             balance_sheet = self.process_balance_sheet(balance_sheet=balance_sheet.copy())
             
+            profit_indicator = profit_indicator[(DATA_START_YEAR<=profit_indicator['years']) & (profit_indicator['years'] <= DATA_END_YEAR) ].reset_index(drop=True)
+            balance_sheet = balance_sheet[(DATA_START_YEAR<=balance_sheet['years']) & (balance_sheet['years'] <= DATA_END_YEAR)].reset_index(drop=True)
             
-            self.start_year = 2002
-            self.end_year = 2011
-            
-            profit_indicator = profit_indicator[(self.start_year<=profit_indicator['years']) & (profit_indicator['years'] <= self.end_year) ].reset_index(drop=True)
-            balance_sheet = balance_sheet[(self.start_year<=balance_sheet['years']) & (balance_sheet['years'] <= self.end_year)].reset_index(drop=True)
-            
-            if profit_indicator['years'][0] == self.start_year and  balance_sheet['years'][0] == self.start_year:
-                profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
-                balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
-                self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])])
-                
-                self.backtest(daily_close=daily_close, stk_id=stk_id) 
+            if not profit_indicator.empty:
+                if (profit_indicator['years'][0] == DATA_START_YEAR) &  (balance_sheet['years'][0] == DATA_START_YEAR):
+                    # profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
+                    # balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
+                    # self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])])
+                    profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
+                    self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae}, index=[stk_id])])
 
+                    
+                
         performance_folder = os.path.join(self.data_folder, 'performance')
         if not os.path.exists(performance_folder):
             os.makedirs(performance_folder)
@@ -166,28 +168,11 @@ class StockAnalizer :
         
         return result
     
-    def backtest(self, daily_close, stk_id):
-        backtest_start_date = f'{self.end_year + 1}-01-01'
-        
-        testing_data = daily_close[daily_close['Date'] > backtest_start_date].reset_index(drop=True)
-        
-        first_day_prive = testing_data['Close'].head(1).values[0]
-        testing_data['updn(%)'] = round((testing_data['Close'] - first_day_prive) /first_day_prive*100  , 2)
-        
-        
-        self.plot_line(data=testing_data, x_label="Date", y_label='updn(%)')
-        
-        filepath = os.path.join('./backtest', f"{stk_id}")
-        os.makedirs(filepath, exist_ok=True)
-        
-        plt.title(f'{stk_id}')
-        plt.savefig(os.path.join(filepath, f"{stk_id}"))
-        plt.clf()
-        plt.close('all')
-    
+    def get_performance(self):
+        return self.performance
 if __name__ == '__main__':
     
-    stk_list = [2330] #tw_stock_id.SEMICONDUCTOR
+    stk_list = ['2330']#tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
     analyzer.analyze_data(stk_list=stk_list)
     
