@@ -15,6 +15,7 @@ class StockAnalizer :
         self.plot_folder = os.path.abspath("./plot")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = pd.DataFrame()
+        self.rolling_trend = {}
     
     def plot_line(self, data, x_label, y_label):
         plt.figure(figsize=(10,10))  # dpi=100, 
@@ -33,15 +34,12 @@ class StockAnalizer :
         model = LinearRegression(fit_intercept=True)
         model.fit(x, y)
         
+        # Interception
         w_0 = model.intercept_
+        # Coeficient
         w_1 = round(model.coef_[0], 2)
         
-        print('Interception : ', w_0)
-        print('Coeficient : ', w_1)
         
-        score = model.score(x, y)
-        print('Score: ', score)
-        print('Accuracy: ' + str(score*100) + '%')
         
         prediction = model.predict(x)
         error = prediction - y
@@ -110,27 +108,27 @@ class StockAnalizer :
         
         # profit_features = ["revenue(%)" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)"]
         # balance_features = ["current_ratio(%)", "quick_ratio(%)"]
-        profit_features = ["gross_profit(%)", "net_income(%)"]
+        profit_features = ["revenue(%)", "gross_profit(%)", "net_income(%)"]
 
-        for stk_id in stk_list :
-        
+        for stk_id in stk_list :     
+            print(stk_id)
             dividend_history, profit_indicator, balance_sheet, daily_close = self.load_data(stk_id=stk_id)
             
             # dividend_history = self.process_dividend_history(dividend_history=dividend_history)
             profit_indicator = self.process_profit_indicator(profit_indicator=profit_indicator.copy(), stk_id=stk_id)
             balance_sheet = self.process_balance_sheet(balance_sheet=balance_sheet.copy())
             
-            profit_indicator = profit_indicator[(DATA_START_YEAR<=profit_indicator['years']) & (profit_indicator['years'] <= DATA_END_YEAR) ].reset_index(drop=True)
-            balance_sheet = balance_sheet[(DATA_START_YEAR<=balance_sheet['years']) & (balance_sheet['years'] <= DATA_END_YEAR)].reset_index(drop=True)
+            filted_profit_indicator = profit_indicator[(DATA_START_YEAR<=profit_indicator['years']) & (profit_indicator['years'] <= DATA_END_YEAR) ].reset_index(drop=True)
+            filted_balance_sheet = balance_sheet[(DATA_START_YEAR<=balance_sheet['years']) & (balance_sheet['years'] <= DATA_END_YEAR)].reset_index(drop=True)
             
-            if not profit_indicator.empty:
-                if (profit_indicator['years'][0] == DATA_START_YEAR) &  (balance_sheet['years'][0] == DATA_START_YEAR):
+            if not filted_profit_indicator.empty:
+                if (filted_profit_indicator['years'][0] == DATA_START_YEAR) &  (filted_balance_sheet['years'][0] == DATA_START_YEAR):
                     # profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
                     # balance_features_mae = self.plot_trend_line(stk_id=stk_id, data=balance_sheet, features=balance_features)
                     # self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])])
-                    profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
+                    profit_features_mae = self.plot_trend_line(stk_id=stk_id, data=filted_profit_indicator, features=profit_features)
                     self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae}, index=[stk_id])])
-
+                    self.gen_rolling_trend_line(stk_id=stk_id, data=profit_indicator, features=profit_features)
                     
                 
         performance_folder = os.path.join(self.data_folder, 'performance')
@@ -138,8 +136,31 @@ class StockAnalizer :
             os.makedirs(performance_folder)
             
         self.performance.to_csv(os.path.join(performance_folder, 'performance.csv'))
-        pass
 
+    def gen_rolling_trend_line(self, stk_id, data, features):
+        
+        data = data[(DATA_START_YEAR<=data['years'])].reset_index(drop=True)
+        
+        rolling_data = list(data.rolling(window=10))[9:]
+        
+        rolling_trend = pd.DataFrame()
+        
+        for data in rolling_data:
+            
+            data = data.reset_index(drop=True)
+            
+            rolling_result = {}
+            for feature in features :
+                coef, mae = self.predict(data=data, x_label="years", y_label=feature)
+                rolling_result.update({f'{feature}_coef' : coef, f'{feature}_mae' : mae})
+    
+            start = int(data["years"].head(1).values[0])
+            end = int(data["years"].tail(1).values[0])
+            rolling_result.update({'period_start':start, 'period_end':end})
+            rolling_trend = pd.concat([rolling_trend, pd.DataFrame(rolling_result, index=[0])])
+            
+        self.rolling_trend[stk_id] = rolling_trend
+    
     def plot_trend_line(self, stk_id, data, features):
         
         result = {}
@@ -170,6 +191,10 @@ class StockAnalizer :
     
     def get_performance(self):
         return self.performance
+    
+    def get_rolling_trend(self):
+        return self.rolling_trend
+    
 if __name__ == '__main__':
     
     stk_list = ['2330']#tw_stock_id.SEMICONDUCTOR
