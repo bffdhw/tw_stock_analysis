@@ -28,7 +28,7 @@ class GoodinfoClient:
         # process data
         df = tables[18]
         df.columns = df.columns.droplevel()
-        df.columns = ["years", "capital(E)" , "financial_score" , "close" , "avg_price" , "updn" , "updn(%)" , "revenue(E)" , "gross_profit" , "operating_margin" , "other_income" , "net_income" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)" , "ROE(%)" , "ROA(%)", "EPS", "up(dolar)", "BPS"]
+        df.columns = ["years", "capital(100B)" , "financial_score" , "close" , "avg_price" , "updn" , "updn(%)" , "revenue(100B)" , "gross_profit" , "operating_margin" , "other_income" , "net_income" ,"gross_profit(%)" , "operating_margin(%)" , "other_income(%)" , "net_income(%)" , "ROE(%)" , "ROA(%)", "EPS", "up(dolar)", "BPS"]
 
         drop_index = []
         for index in df.index :
@@ -93,7 +93,7 @@ class GoodinfoClient:
         # process data
         df = tables[15] #22
         df.columns = df.columns.droplevel()
-        df.columns = ["years", "capital(E)" , "financial_score " , "last_year_close" , "current_year_close" , "updn(dolar)" , "updn(%)" , "cash" , "accounts_receivable" , "stock" , "current_assets" , "fund_investment" ,"fixed_asset" , "intangible_assets" , "other_assets" , "accounts_payable" , "current_liabilities" , "long_term_liabilities", "other_liabilities", "total_liabilities", "shareholder_equity(%)", "BPS(dolar)"]
+        df.columns = ["years", "capital(100B)" , "financial_score " , "last_year_close" , "current_year_close" , "updn(dolar)" , "updn(%)" , "cash" , "accounts_receivable" , "stock" , "current_assets" , "fund_investment" ,"fixed_asset" , "intangible_assets" , "other_assets" , "accounts_payable" , "current_liabilities" , "long_term_liabilities", "other_liabilities", "total_liabilities", "shareholder_equity(%)", "BPS(dolar)"]
 
         drop_index = []
         for index in df.index :
