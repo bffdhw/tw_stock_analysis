@@ -5,17 +5,18 @@ import tw_stock_id
 import datetime
 import matplotlib.pyplot as plt
 from stock_analyzer import StockAnalizer
-from common import DATA_START_YEAR, DATA_END_YEAR, STOP_LOSS_PCT
+from common import BACKTEST_START_DATE, STOP_LOSS_PCT
 
 class Backtester:
     def __init__(self):
         self.data_folder = os.path.abspath("./data")
-        self.backtest_start_date = f'{DATA_START_YEAR + 10}-01-01'
+        self.backtest_result_path = os.path.join('./backtest')
+        os.makedirs(self.backtest_result_path, exist_ok=True)
 
 
     def init_benchmark_data(self):
         self.benchmark_data = self.load_data('0050')
-        self.benchmark_data = self.benchmark_data[self.benchmark_data['Date'] > self.backtest_start_date].reset_index(drop=True)
+        self.benchmark_data = self.benchmark_data[self.benchmark_data['Date'] > BACKTEST_START_DATE].reset_index(drop=True)
         self.benchmark_data['Date'] = pd.to_datetime(self.benchmark_data['Date']).dt.date
         
         first_day_price = self.benchmark_data['Close'].head(1).values[0]
@@ -30,7 +31,7 @@ class Backtester:
     def buy_and_hold(self, stk_id):
         
         target_data = self.load_data(stk_id)
-        target_data = target_data[target_data['Date'] > self.backtest_start_date].reset_index(drop=True)
+        target_data = target_data[target_data['Date'] >= BACKTEST_START_DATE].reset_index(drop=True)
         target_data['Date'] = pd.to_datetime(target_data['Date']).dt.date
         first_day_price = target_data['Close'].head(1).values[0]
         target_data['updn(%)'] = round((target_data['Close'] - first_day_price) /first_day_price*100  , 2)
@@ -49,7 +50,7 @@ class Backtester:
         signal = list(signal['period_end']+1)
         
         target_data = self.load_data(stk_id)
-        target_data = target_data[target_data['Date'] > self.backtest_start_date].reset_index(drop=True)
+        target_data = target_data[target_data['Date'] > BACKTEST_START_DATE].reset_index(drop=True)
         target_data['Date'] = pd.to_datetime(target_data['Date']).dt.date
         target_data['year'] = pd.to_datetime(target_data['Date']).dt.year
         grouped_data = list(target_data.groupby("year"))
@@ -145,35 +146,42 @@ class Backtester:
         
     def run_backtest(self, performance, rolling_trend):
         self.init_benchmark_data()
-        
         stk_list = self.select_good_stock(performance=performance)
+        portfolio_profit = pd.DataFrame()
+        
         for stk_id in stk_list:
             testing_data = self.buy_and_hold(stk_id=stk_id)
             advanced_result = self.advanced_buy_and_hold(stk_id=stk_id, rolling_trend=rolling_trend)
             testing_data['advanced_updn(%)'] = list(advanced_result['updn(%)'])
-
-            #plot   
-            ax = testing_data.plot(x='Date', y = ['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], rot=45, figsize=(30,20), linewidth=3)
-
-            plt.ticklabel_format(style='plain', axis='y')
-            ax.set_title(f"{stk_id}",fontsize=32)
-            ax.set_xlabel("Time",fontsize=30)
-            ax.set_ylabel("Profit(%)",fontsize=30)
-            plt.setp(ax.get_xticklabels(), fontsize=26)
-            plt.setp(ax.get_yticklabels(), fontsize=26)
             
-            filepath = os.path.join('./backtest')
-            os.makedirs(filepath, exist_ok=True)
+            if portfolio_profit.empty:
+                portfolio_profit['Date'] = testing_data['Date']
+                portfolio_profit['updn(%)'] = testing_data['updn(%)']
+                portfolio_profit['benchmark_updn(%)'] = testing_data['benchmark_updn(%)']
+            else:
+                portfolio_profit['updn(%)'] = portfolio_profit['updn(%)'] + testing_data['updn(%)']
             
-            # plt.title(f'{stk_id}')
-            plt.savefig(os.path.join(filepath, f"{stk_id}"))
-            plt.clf()
-            plt.close('all')
+            self.plot_performance(data=testing_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id)
+        
+        portfolio_profit['updn(%)'] = portfolio_profit['updn(%)']/ len(stk_list)
+        self.plot_performance(data=portfolio_profit, columns=['updn(%)', 'benchmark_updn(%)'], title='portfolio(without 3041)')
+    
+    def plot_performance(self, data:pd.DataFrame, columns:list[str], title:str):
+        ax = data.plot(x='Date', y = columns, rot=45, figsize=(30,20), linewidth=3)
+        plt.ticklabel_format(style='plain', axis='y')
+        ax.set_title(f"{title}",fontsize=32)
+        ax.set_xlabel("Time",fontsize=30)
+        ax.set_ylabel("Profit(%)",fontsize=30)
+        plt.setp(ax.get_xticklabels(), fontsize=26)
+        plt.setp(ax.get_yticklabels(), fontsize=26)
+        plt.savefig(os.path.join(self.backtest_result_path, f"{title}"))
+        plt.clf()
+        plt.close('all')
 
 
 if __name__ == '__main__':
     
-    stk_list = tw_stock_id.SEMICONDUCTOR
+    stk_list = ['2302', '2329', '2330', '2340', '6202', '8271', '6271'] #tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
     analyzer.analyze_data(stk_list=stk_list)
     performance = analyzer.get_performance()
