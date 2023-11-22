@@ -18,14 +18,14 @@ This is a study based on the Taiwan stock market, aiming to identify excellent c
 
 # Research Methods
 
-# Stock Selection Strategy
+## Stock Selection Strategy
 
 1. This study assumes that annual financial report data is sufficient to reflect a company's past and, to some extent, future operational performance.
 2. The use of annual data results in a smaller dataset (less than 100 data per company). Linear regression is initially chosen as the model for predicting future trends.
 3. Key financial indicators considered include revenue ratio, gross profit margin, net profit margin, as well as debt repayment capability, dividend data, and others.
 4. Stocks exhibiting a positive trend in financial indicators are selected.
 
-# Trading Strategy
+## Trading Strategy
 
 1. After selecting stocks, backtest the performance using a buy and hold strategy, and compare it with the market benchmark.
 2. The market benchmark is set as the Taiwan stock market's 0050 index.
