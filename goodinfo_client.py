@@ -60,7 +60,7 @@ class GoodinfoClient:
         df = df[df['years'].str.isnumeric()]
             
         df.to_csv(os.path.join(self.profit_indicator_folder, f'{stk_id}.csv'), index=False)
-        time.sleep(5)
+        time.sleep(8)
         
     def get_dividend_history(self, stk_id:list[str]):
         
@@ -84,7 +84,7 @@ class GoodinfoClient:
         df = df[df['years'].str.isnumeric()]
         
         df.to_csv(os.path.join(self.dividend_history_folder, f'{stk_id}.csv'), index=False)
-        time.sleep(5)
+        time.sleep(8)
     
     def get_balance_sheet(self, stk_id):
         
@@ -104,7 +104,7 @@ class GoodinfoClient:
         df = df[df['years'].str.isnumeric()]
             
         df.to_csv(os.path.join(self.balance_sheet_folder, f'{stk_id}.csv'), index=False)
-        time.sleep(5)
+        time.sleep(8)
     
     def get_raw_data(self, stk_list:list[str]):
         
