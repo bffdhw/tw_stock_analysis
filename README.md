@@ -19,9 +19,18 @@ This is a study based on the Taiwan stock market, aiming to identify excellent c
 # Research Methods
 
 ## Data
+For the sake of having a consistent baseline across different stocks, this study standardizes the data starting from the year 2002 (excluding stocks that do not meet the criteria). Trend predictions are conducted for the period from 2002 to 2011, spanning a total of 10 years. Subsequently, a buy-and-hold strategy is backtested from 2012 to 2023/11.
 ![flowchart](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/97289e11-16cb-49c7-a89c-c0a03aa34415)
 
-For the sake of having a consistent baseline across different stocks, this study standardizes the data starting from the year 2002 (excluding stocks that do not meet the criteria). Trend predictions are conducted for the period from 2002 to 2011, spanning a total of 10 years. Subsequently, a buy-and-hold strategy is backtested from 2012 to 2023/11.
+## Define "Trend"
+The research assumes that if financial data demonstrates a positive growth trend, the stock price may also experience an upward trend. Therefore, defining financial indicators as showing positive growth becomes crucial. In this study, financial data spanning 10 years from 2002 to 2011, including but not limited to revenue, net profit, gross profit, etc., is utilized. Linear regression is employed as a reference standard for trend analysis. If the slope of the regression line is positive, it is considered indicative of an upward growth trend for the respective indicator.
+
+![revenue(%)_Indicator](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/daa69382-10cd-4c54-9290-e23e8eb8683c)
+![net_income(%)_Indicator](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/36921dda-860d-4f85-bc1a-fff920879b57)
+![gross_profit(%)_Indicator](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/a019066a-1717-4563-82da-40f7f3247c79)
+
+
+
 ## Stock Selection Strategy
 
 1. This study assumes that annual financial report data is sufficient to reflect a company's past and, to some extent, future operational performance.
