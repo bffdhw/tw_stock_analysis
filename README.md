@@ -57,13 +57,15 @@ The results indicate that even though the selected stocks include those with hig
 ## Advanced Buy And Hold Strategy
 ![6271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/481a3f8a-df8a-4176-be49-8d02d7d71e33)
 ![6202](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/35d488f4-fb8b-4d1c-b2ed-74244146a447)
-![3041](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/24043e03-a6e1-4991-842f-5b128627d91b)
 ![2340](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/f2533bf5-a397-473a-8f9d-00f47d8a0c1a)
 ![2330](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/a6568f25-2cb1-409a-aa34-d421dab87daf)
 ![2329](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/afcd9cbd-f26e-47c4-9701-91f3d34b85a8)
 ![2302](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/12e84877-83ae-461b-9f51-6edf1a7c0665)
 ![8271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/273ca709-6e2c-4ad6-abc2-3904c333cf1f)
+The results indicate that this approach can reduce the volatility risk of a buy-and-hold strategy(excluding considerations for slippage, transaction fees, and taxes).
 
+Even when filtering stocks with a long-term downward trend, losses can be mitigated by incorporating stop-loss measures to avoid further purchases. 
+![3041](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/24043e03-a6e1-4991-842f-5b128627d91b)
 
 ## Advanced Buy And Hold Strategy Portfolio
 ![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/333ded73-0866-43bc-926c-bc454167787c)
@@ -74,12 +76,13 @@ The results indicate that even though the selected stocks include those with hig
 ![6271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/766ec7c5-cf2c-4d0b-8be3-f380554402b8)
 ![2340](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fcf20610-99b9-4fbe-9ebc-d607b47bd8b4)
 ![2330](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/692af939-99bc-41ea-b755-fa25cc263980)
+Adding revenue as a criterion for selecting good stocks can help filter out targets (such as 3041) with a long-term decline in stock prices.
 
 Original Buy and Hold Portfolio
 ![original_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/b1245c96-cdf3-48b1-94f9-e4944240684b)
 
 Advanced Buy and Hold Portfolio
 ![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fec1bd6c-c97e-4502-89de-8e92eb9e9056)
-
+The "Advanced Buy and Hold" strategy further reduces risk.
 
 
