@@ -16,7 +16,7 @@ class StockAnalizer :
         self.plot_folder = os.path.abspath("./plot")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = pd.DataFrame()
-        self.rolling_trend = {}
+        self.rolling_trends = {}
     
     def plot_line(self, data, x_label, y_label):
         plt.figure(figsize=(10,10))  # dpi=100, 
@@ -109,8 +109,6 @@ class StockAnalizer :
         for stk_id in stk_list :     
             print(stk_id)
             loaded_data = self.load_data(stk_id=stk_id)
-            
-            # dividend_history = self.process_dividend_history(dividend_history=dividend_history)
             profit_indicator = self.process_profit_indicator(profit_indicator=loaded_data.profit_indicator.copy())
             balance_sheet = self.process_balance_sheet(balance_sheet=loaded_data.balance_sheet.copy())
             
@@ -120,7 +118,7 @@ class StockAnalizer :
                 self.plot_trend_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
                 # self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae, **balance_features_mae}, index=[stk_id])])
                 self.performance = pd.concat([self.performance, pd.DataFrame({**profit_features_mae}, index=[stk_id])])
-                self.gen_rolling_trend_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+                self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
                 
         performance_folder = os.path.join(self.data_folder, 'performance')
         if not os.path.exists(performance_folder):
@@ -128,12 +126,12 @@ class StockAnalizer :
             
         self.performance.to_csv(os.path.join(performance_folder, 'performance.csv'))
 
-    def gen_rolling_trend_line(self, stk_id:str, data:pd.DataFrame, features:list[str]):
+    def gen_rolling_trends_line(self, stk_id:str, data:pd.DataFrame, features:list[str]):
         
         data = data[(TREND_START_YEAR<=data['years'])].reset_index(drop=True)
         rolling_data = list(data.rolling(window=10))[9:]
         
-        rolling_trend = pd.DataFrame()
+        rolling_trends = pd.DataFrame()
         
         for data in rolling_data:
             data = data.reset_index(drop=True)
@@ -145,9 +143,9 @@ class StockAnalizer :
             start = int(data["years"].head(1).values[0])
             end = int(data["years"].tail(1).values[0])
             rolling_result.update({'period_start':start, 'period_end':end})
-            rolling_trend = pd.concat([rolling_trend, pd.DataFrame(rolling_result, index=[0])])
+            rolling_trends = pd.concat([rolling_trends, pd.DataFrame(rolling_result, index=[0])])
             
-        self.rolling_trend[stk_id] = rolling_trend
+        self.rolling_trends[stk_id] = rolling_trends
     
     def gen_trend(self, data:pd.DataFrame, features:list[str]) -> dict[str, float]:
         
@@ -183,8 +181,8 @@ class StockAnalizer :
     def get_performance(self):
         return self.performance
     
-    def get_rolling_trend(self):
-        return self.rolling_trend
+    def get_rolling_trends(self):
+        return self.rolling_trends
     
 if __name__ == '__main__':
     
