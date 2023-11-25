@@ -64,6 +64,7 @@ The results indicate that even though the selected stocks include those with hig
 
 
 ## Advanced Buy And Hold Strategy
+The core idea of this strategy is based on a buy-and-hold approach, but with the aim of avoiding the risk of drawdowns. The method employed involves selling the accumulated position when the cumulative profit and loss falls by a certain percentage. After the price recovers, the position is bought back. It's worth noting that this method may incur higher frictional costs, especially during market fluctuations or oscillations.
 ![6271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/481a3f8a-df8a-4176-be49-8d02d7d71e33)
 ![6202](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/35d488f4-fb8b-4d1c-b2ed-74244146a447)
 ![2340](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/f2533bf5-a397-473a-8f9d-00f47d8a0c1a)
@@ -95,4 +96,14 @@ Advanced Buy and Hold Portfolio
 ![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fec1bd6c-c97e-4502-89de-8e92eb9e9056)
 The "Advanced Buy and Hold" strategy further reduces risk.
 
+# Conclusion
+In targets with a long-term upward trend in stock prices, using the Advanced Buy and Hold strategy appears to help mitigate the volatility risk associated with the original Buy and Hold strategy, especially in situations where there is a minimal impact on the return rate.
+
+Financial statement analysis, capable of selecting targets with a high probability of long-term growth, aligns well with the scenario for employing the Advanced Buy and Hold strategy. Even in the selection of stocks with a long-term decline, losses can be reduced through the use of a stop-loss mechanism.
+
+# Potential Risks and Areas for Improvement
+
+1. The current strategy involves backtesting with data from the previous 10 years leading up to 2012. Further validation is still needed to determine if the stock selection method is applicable for each period in a sliding window.
+2. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
+3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. In other words, there may be a potential error due to delayed financial report disclosures, leading to an overestimation of the backtested profit and loss.
 
