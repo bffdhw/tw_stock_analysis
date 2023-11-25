@@ -47,18 +47,14 @@ The research assumes that if financial data demonstrates a positive growth trend
 # Experimental Results 
 
 ## Basic Buy And Hold Strategy
-### good
+Screening Criteria : (net_income(%)_coef > 0) & (gross_profit(%)_coef > 0)
 ![2302](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/963bfd51-025b-4bfc-8fa6-baf30c5be746)
 ![2329](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/97774f6a-e2ac-406d-955f-8cfb6cbfadfc)
 ![2330](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/eed6bf13-05b3-482f-8562-605fda7619ac)
 ![2340](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/2d38d650-9ef8-4f4d-ace6-683fd66621b9)
 ![6202](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/9cf125b2-e56f-4824-bea2-419ad67106d3)
-
-### high risk
 ![8271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/04e15028-1bd6-48b2-91d7-f1ca49813209)
 ![6271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/e05767d6-689f-4d5a-8193-efc1b1f3911f)
-
-### trash
 ![3041](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/8e5a0b75-c39a-4c9c-bf34-2b4e0869870c)
 
 ### portfolio
@@ -85,6 +81,7 @@ Even when filtering stocks with a long-term downward trend, losses can be mitiga
 
 
 ## Using Increased Revenue as a Filtering Criterion
+Screening Criteria : (net_income(%)_coef > 0) & (gross_profit(%)_coef > 0) & (revenue(%)_coef > 0)
 ![8271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/32018c75-644c-45d1-b84a-5dd27659292d)
 ![6271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/766ec7c5-cf2c-4d0b-8be3-f380554402b8)
 ![2340](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fcf20610-99b9-4fbe-9ebc-d607b47bd8b4)
