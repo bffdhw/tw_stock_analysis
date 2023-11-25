@@ -48,6 +48,11 @@ This is a study based on the Taiwan stock market, aiming to identify excellent c
 ### trash
 ![3041](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/8e5a0b75-c39a-4c9c-bf34-2b4e0869870c)
 
+### portfolio
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/5ead418d-b5ee-4ed0-934f-9d36fd59530a)
+The results indicate that even though the selected stocks include those with higher volatility and long-term declines, the portfolio's performance still outperforms the overall market (currently comprised only of semiconductor industry stocks).
+
+
 
 ## Active Buy And Hold Strategy(stop loss)
 ![8271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/2653c5f1-e3c7-4e49-b3ef-b7ec269207a7)
