@@ -62,7 +62,6 @@ The results indicate that even though the selected stocks include those with hig
 ![2330](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/a6568f25-2cb1-409a-aa34-d421dab87daf)
 ![2329](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/afcd9cbd-f26e-47c4-9701-91f3d34b85a8)
 ![2302](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/12e84877-83ae-461b-9f51-6edf1a7c0665)
-![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/dedd5fe7-0e2f-4008-8f38-c916d5e7208d)
 ![8271](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/273ca709-6e2c-4ad6-abc2-3904c333cf1f)
 
 
