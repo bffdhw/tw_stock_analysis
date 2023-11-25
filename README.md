@@ -19,7 +19,8 @@ This is a study based on the Taiwan stock market, aiming to identify excellent c
 # Research Methods
 
 ## Data
-![flowchart (1)](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/94dbef9a-a51b-4f35-8ef6-1a0a735e9d14)
+![flowchart](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/97289e11-16cb-49c7-a89c-c0a03aa34415)
+
 For the sake of having a consistent baseline across different stocks, this study standardizes the data starting from the year 2002 (excluding stocks that do not meet the criteria). Trend predictions are conducted for the period from 2002 to 2011, spanning a total of 10 years. Subsequently, a buy-and-hold strategy is backtested from 2012 to 2023/11.
 ## Stock Selection Strategy
 
