@@ -106,4 +106,5 @@ Financial statement analysis, capable of selecting targets with a high probabili
 1. The current strategy involves backtesting with data from the previous 10 years leading up to 2012. Further validation is still needed to determine if the stock selection method is applicable for each period in a sliding window.
 2. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
 3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. In other words, there may be a potential error due to delayed financial report disclosures, leading to an overestimation of the backtested profit and loss.
+4. In the current experiment, factors such as slippage, taxes, and transaction fees have not been taken into account. Therefore, the actual profit and loss may be further adjusted downward.
 
