@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 TREND_START_YEAR = 2002
 TREND_END_YEAR = 2011
@@ -21,9 +22,27 @@ class DataType:
     
 
 class LoadedData:
-    def __init__(self, dividend_history:pd.DataFrame(), profit_indicator:pd.DataFrame(), balance_sheet:pd.DataFrame(), daily_close:pd.DataFrame()):
+    def __init__(self, dividend_history:pd.DataFrame, profit_indicator:pd.DataFrame, balance_sheet:pd.DataFrame, daily_close:pd.DataFrame):
         self.dividend_history = dividend_history
         self.profit_indicator = profit_indicator
         self.balance_sheet = balance_sheet
         self.daily_close = daily_close
-    
+
+class ProfitIndicatorColumn:
+    years = 'years'
+    revenue = 'revenue(100B)'
+    revenue_pct = 'revenue(%)'
+
+class BalanceSheetColumn:
+    years = 'years'
+    current_ratio_pct = "current_ratio(%)"
+    current_assets = "current_assets"
+    current_liabilities = "current_liabilities"
+    quick_ratio_pct = "quick_ratio(%)"
+    stock = "stock"
+
+class TrendPrediction:
+    def __init__(self, slope, mae, prediction:np.ndarray):
+        self.slope = slope
+        self.mae = mae
+        self.prediction = prediction
