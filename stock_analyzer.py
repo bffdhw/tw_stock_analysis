@@ -25,7 +25,7 @@ class StockAnalizer :
         if not os.path.exists(self.performance_folder):
             os.makedirs(self.performance_folder)
     
-    def plot_trend(self, data, x_label, y_label, trend_prediction, stk_id):
+    def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str):
         
         plt.figure(figsize=(10,10))  # dpi=100
         
@@ -49,7 +49,7 @@ class StockAnalizer :
         plt.clf()
         plt.close('all')
     
-    def predict_trend(self, data, x_label, y_label):
+    def predict_trend(self, data:pd.DataFrame, x_label:str, y_label:str) -> TrendPrediction:
     
         x = np.array(data[x_label])
         y = np.array(data[y_label])
@@ -124,7 +124,7 @@ class StockAnalizer :
                 
         self.performance.to_csv(os.path.join(self.performance_folder, 'performance.csv'))
 
-    def gen_trends(self, data, features, stk_id):
+    def gen_trends(self, data:pd.DataFrame, features:list[str], stk_id:str) -> dict[str, float]:
         trend_result = {}
         for feature in features :
             trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
