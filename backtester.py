@@ -147,7 +147,7 @@ if __name__ == '__main__':
     
     stk_list = ['2302', '2329', '2330', '2340', '6202', '8271', '6271', '3041'] #tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
-    analyzer.analyze_data(stk_list=stk_list)
+    analyzer.run_analysis(stk_list=stk_list)
     performance = analyzer.get_performance()
     rolling_trends = analyzer.get_rolling_trends()
     
