@@ -16,89 +16,92 @@ class Backtester:
 
     def init_benchmark_data(self):
         self.benchmark_data = self.load_data('0050')
-        self.benchmark_data = self.benchmark_data[self.benchmark_data['Date'] > BACKTEST_START_DATE].reset_index(drop=True)
-        self.benchmark_data['Date'] = pd.to_datetime(self.benchmark_data['Date']).dt.date
+        self.benchmark_data = self.process_data(data=self.benchmark_data)
         
         first_day_price = self.benchmark_data['Close'].head(1).values[0]
-        self.benchmark_data['benchmark_updn(%)'] = round((self.benchmark_data['Close'] - first_day_price) /first_day_price*100  , 2)
+        self.benchmark_data['benchmark_updn(%)'] = self.calculate_updn_pct(target_value=self.benchmark_data['Close'], baseline_value=first_day_price)
         self.benchmark_data = self.benchmark_data[['Date', 'benchmark_updn(%)']]
 
-    def load_data(self, stk_id):
+    def load_data(self, stk_id:str) -> pd.DataFrame:
         data_path = os.path.join(self.data_folder, 'daily_close', f'{stk_id}.csv')
         return pd.read_csv(data_path)
     
+    def process_data(self, data:pd.DataFrame) -> pd.DataFrame:
+        data = data[data['Date'] >= BACKTEST_START_DATE].reset_index(drop=True)
+        data['Date'] = pd.to_datetime(data['Date']).dt.date
+        return data
     
-    def buy_and_hold(self, stk_id):
+    def buy_and_hold(self, stk_id:str) -> pd.DataFrame:
         
         target_data = self.load_data(stk_id)
-        target_data = target_data[target_data['Date'] >= BACKTEST_START_DATE].reset_index(drop=True)
-        target_data['Date'] = pd.to_datetime(target_data['Date']).dt.date
+        target_data = self.process_data(data=target_data)
         first_day_price = target_data['Close'].head(1).values[0]
-        target_data['updn(%)'] = round((target_data['Close'] - first_day_price) /first_day_price*100  , 2)
+        target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
         
         testing_data = pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
-        
         return testing_data
     
-    def advanced_buy_and_hold(self, stk_id):
+    def advanced_buy_and_hold(self, stk_id:str) -> pd.DataFrame:
         target_data = self.load_data(stk_id)
-        target_data = target_data[target_data['Date'] >= BACKTEST_START_DATE].reset_index(drop=True)
-        target_data['Date'] = pd.to_datetime(target_data['Date']).dt.date
+        target_data = self.process_data(data=target_data)
         
         # strategy
         first_day_price = target_data['Close'].head(1).values[0]
-        last_close = 0
+        last_cost = 0.0
+        stop_loss_price = 0
         position = False
         pnl = []
         
-        last_peak_updn = 0
-        cumsum_updn = 0
-        stop_loss_price = 0
-        
-        for index, data in target_data.iterrows():
+        for _, data in target_data.iterrows():
             
-            # buy
-            if not position and (data['Close'] > stop_loss_price): #*0.02
+            close_price = data['Close']
+            # decide to buy, hold, or do nothing
+            if not position and (close_price > stop_loss_price):
                 position = True
-            #hold
             else :
                 pass
-    
+
+            # calculate profit
             if position:
-
-                peaks = pd.Series(np.cumsum(pnl)).expanding().max()
-                if not peaks.empty:
-                    last_peak = peaks[index-1]
-                    cumsum = np.cumsum(pnl)[-1] + (data['Close'] - last_close)
-                    last_peak_updn = round((last_peak - first_day_price) /first_day_price*100, 2)
-                    cumsum_updn = round((cumsum - first_day_price)/first_day_price*100, 2)
-
+                profit = close_price - last_cost
+                drawdown = self.calculate_drawdown(pnl=pnl, first_day_price=first_day_price, close_price=close_price, last_cost=last_cost)
                 # stop loss
-                if (cumsum_updn - last_peak_updn) < -20:
+                if (drawdown) < STOP_LOSS_PCT:
                     position = False
-                    stop_loss_price = data['Close']
-                    profit = data['Close'] - last_close
-                    last_close = stop_loss_price
-                            
+                    stop_loss_price = close_price
+                    last_cost = stop_loss_price         
                 # hold
                 else :
-                    profit = data['Close'] - last_close
-                    last_close = data['Close'] 
+                    last_cost = close_price
             else :
                 profit = 0
             
             pnl.append(profit)
             
         target_data['cumsum'] = np.cumsum(pnl)
-        target_data['updn(%)'] = round((target_data['cumsum'] - first_day_price) /first_day_price*100, 2)
+        target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['cumsum'], baseline_value=first_day_price)
         testing_data = pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
         return testing_data
     
-    def select_good_stock(self, performance):
-        good_stock_filter = (performance['net_income(%)_coef'] > 0) & (performance['gross_profit(%)_coef'] > 0) & (performance['revenue(%)_coef'] > 0)
-        return performance[good_stock_filter].index
+    def calculate_drawdown(self, pnl:list[float], first_day_price:float, close_price:float, last_cost:float)-> float:
+        peaks = pd.Series(np.cumsum(pnl)).expanding().max()
+        if not peaks.empty:
+            last_peak = peaks.tail(1).values[0]
+            last_peak_updn_pct = self.calculate_updn_pct(target_value=last_peak, baseline_value=first_day_price)
+            cumsum = np.cumsum(pnl)[-1] + (close_price - last_cost)
+            cumsum_pct = self.calculate_updn_pct(target_value=cumsum, baseline_value=first_day_price)
+            return cumsum_pct - last_peak_updn_pct
+        else: 
+            return 0.0
+    
+    def calculate_updn_pct(self, target_value, baseline_value):
+        return round((target_value - baseline_value)/baseline_value*100, 2)
+    
+    def select_good_stock(self, performance:pd.DataFrame) -> list[str]:
+        good_stock_filter = (performance['net_income(%)_slope'] > 0) & (performance['gross_profit(%)_slope'] > 0) & (performance['revenue(%)_slope'] > 0)
+        return list(performance[good_stock_filter].index)
         
-    def run_backtest(self, performance, rolling_trends:dict[pd.DataFrame]):
+    def run_backtest(self, performance:pd.DataFrame, rolling_trends:dict[pd.DataFrame]):
         self.init_benchmark_data()
         stk_list = self.select_good_stock(performance=performance)
         original_portfolio_profit = pd.DataFrame()
@@ -115,11 +118,12 @@ class Backtester:
             self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id)
             advanced_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=advanced_portfolio_profit, result_data=result_data, profit_column='advanced_updn(%)')
         
-        original_portfolio_profit['updn(%)'] = original_portfolio_profit['updn(%)']/ len(stk_list)
-        self.plot_performance(data=original_portfolio_profit, columns=['updn(%)', 'benchmark_updn(%)'], title='original_portfolio')
-        
-        advanced_portfolio_profit['updn(%)'] = advanced_portfolio_profit['updn(%)']/ len(stk_list)
-        self.plot_performance(data=advanced_portfolio_profit, columns=['updn(%)', 'benchmark_updn(%)'], title='advanced_portfolio')
+        self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio')
+        self.plot_portfolio_performance(data=advanced_portfolio_profit, title='advanced_portfolio')
+    
+    def plot_portfolio_performance(self, data, title):
+        data['updn(%)'] = data['updn(%)'] / len(stk_list)
+        self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title)
     
     def calculate_portfolio_profit(self, portfolio_profit, result_data, profit_column):
         if portfolio_profit.empty:
