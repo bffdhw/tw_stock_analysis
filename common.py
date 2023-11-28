@@ -3,7 +3,7 @@ import numpy as np
 
 TREND_START_YEAR = 2002
 TREND_END_YEAR = 2011
-BACKTEST_START_DATE = f'{TREND_END_YEAR+1}-01-01'
+BACKTEST_START_DATE = f'{TREND_END_YEAR+1}-04-01'
 STOP_LOSS_PCT = -20
 
 
@@ -46,3 +46,7 @@ class TrendPrediction:
         self.slope = slope
         self.mae = mae
         self.prediction = prediction
+
+class TransactionCostsPct:
+    commission_pct =  0.001425 * 2
+    tax_pct = 0.001
