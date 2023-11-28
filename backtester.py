@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import tw_stock_id
-import datetime
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from stock_analyzer import StockAnalizer
 from common import BACKTEST_START_DATE, STOP_LOSS_PCT
 
@@ -135,13 +135,17 @@ class Backtester:
         return portfolio_profit
 
     def plot_performance(self, data:pd.DataFrame, columns:list[str], title:str):
-        ax = data.plot(x='Date', y = columns, rot=45, figsize=(60,40), linewidth=3)
+        ax = data.plot(x='Date', y = columns, rot=45, figsize=(50,30), linewidth=3)
+        ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1,4,7,10]))
+        ax.grid(True)
+        ax.set_title(f"{title}",fontsize=42)
+        ax.set_xlabel("Time",fontsize=38)
+        ax.set_ylabel("Profit(%)",fontsize=38)
+        plt.yticks(range(0, 800, 50))
         plt.ticklabel_format(style='plain', axis='y')
-        ax.set_title(f"{title}",fontsize=32)
-        ax.set_xlabel("Time",fontsize=30)
-        ax.set_ylabel("Profit(%)",fontsize=30)
-        plt.setp(ax.get_xticklabels(), fontsize=26)
-        plt.setp(ax.get_yticklabels(), fontsize=26)
+        plt.setp(ax.get_xticklabels(), fontsize=30)
+        plt.setp(ax.get_yticklabels(), fontsize=30)
+        plt.legend(columns, fontsize="40", loc ="upper left")
         plt.savefig(os.path.join(self.backtest_result_path, f"{title}"))
         plt.clf()
         plt.close('all')
