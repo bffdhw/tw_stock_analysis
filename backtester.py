@@ -5,7 +5,7 @@ import tw_stock_id
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from stock_analyzer import StockAnalizer
-from common import BACKTEST_START_DATE, STOP_LOSS_PCT
+from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE
 
 class Backtester:
     def __init__(self):
@@ -27,7 +27,7 @@ class Backtester:
         return pd.read_csv(data_path)
     
     def process_data(self, data:pd.DataFrame) -> pd.DataFrame:
-        data = data[data['Date'] >= BACKTEST_START_DATE].reset_index(drop=True)
+        data = data[(BACKTEST_START_DATE <= data['Date']) & (data['Date'] <= BACKTEST_END_DATE)].reset_index(drop=True)
         data['Date'] = pd.to_datetime(data['Date']).dt.date
         return data
     
