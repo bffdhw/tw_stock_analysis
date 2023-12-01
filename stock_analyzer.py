@@ -10,22 +10,18 @@ from common import (
     BalanceSheetColumn, TrendPrediction
 )
 
-DATA_LIST = [DataType.dividend_history, DataType.profit_indicator, DataType.balance_sheet, DataType.daily_close]
+DATA_LIST = [DataType.profit_indicator]
+ROLLING_WINDOW_SIZE = 10
 
 class StockAnalizer :
     
     def __init__(self):
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
-        self.plot_folder = os.path.abspath("./plot")
-        os.makedirs(self.data_folder, exist_ok=True)
-        self.performance = pd.DataFrame()
+        self.performance = {}
         self.rolling_trends = {}
-        self.performance_folder = os.path.join(self.data_folder, 'performance')
-        if not os.path.exists(self.performance_folder):
-            os.makedirs(self.performance_folder)
     
-    def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str):
+    def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str, filename:str='_'):
         
         plt.figure(figsize=(10,10))  # dpi=100
         
@@ -41,11 +37,11 @@ class StockAnalizer :
         plt.xlabel(x_label)
         plt.ylabel(f"{y_label}")
         plt.gca().set_xticks(data[x_label].unique())
-        plt.title(f'{y_label} Indicator({stk_id})')
+        plt.title(f'{y_label}_({stk_id})')
         
-        filepath = os.path.join(self.plot_folder, f"{stk_id}")
+        filepath = os.path.join(self.trend_folder, f'{y_label}')
         os.makedirs(filepath, exist_ok=True)
-        plt.savefig(os.path.join(filepath, f"{y_label}_Indicator"))
+        plt.savefig(os.path.join(filepath, f"{filename}"))
         plt.clf()
         plt.close('all')
     
@@ -118,40 +114,32 @@ class StockAnalizer :
             profit_indicator = self.process_profit_indicator(profit_indicator=loaded_data.profit_indicator.copy())
             
             if not profit_indicator.empty:
-                profit_trends = self.gen_trends(data=profit_indicator, features=PROFIT_FEATURES, stk_id=stk_id)
-                self.performance = pd.concat([self.performance, pd.DataFrame({**profit_trends}, index=[stk_id])])
-                self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+                self.trend_folder = os.path.abspath(f"./trend_result/{stk_id}")
+                os.makedirs(self.trend_folder, exist_ok=True)
                 
-        self.performance.to_csv(os.path.join(self.performance_folder, 'performance.csv'))
-
-    def gen_trends(self, data:pd.DataFrame, features:list[str], stk_id:str) -> dict[str, float]:
-        trend_result = {}
-        for feature in features :
-            trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
-            trend_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae})
-            self.plot_trend(data=data, x_label="years", y_label=feature, trend_prediction=trend_prediction, stk_id=stk_id)
-        return trend_result
+                rolling_trends = self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+                self.performance[stk_id] = rolling_trends
 
     def gen_rolling_trends_line(self, stk_id:str, data:pd.DataFrame, features:list[str]):
         
-        data = data[(TREND_START_YEAR<=data['years'])].reset_index(drop=True)
-        rolling_data = list(data.rolling(window=10))[9:]
-        
+        rolling_data = list(data.rolling(window=ROLLING_WINDOW_SIZE))[ROLLING_WINDOW_SIZE-1:]
         rolling_trends = pd.DataFrame()
         
         for data in rolling_data:
             data = data.reset_index(drop=True)
-            rolling_result = {}
-            for feature in features :
-                trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
-                rolling_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae})
-    
             start = int(data["years"].head(1).values[0])
             end = int(data["years"].tail(1).values[0])
-            rolling_result.update({'period_start':start, 'period_end':end})
-            rolling_trends = pd.concat([rolling_trends, pd.DataFrame(rolling_result, index=[0])])
+            start_end = f'{start}-{end}'
+            trend_result = {}
             
-        self.rolling_trends[stk_id] = rolling_trends
+            for feature in features :
+                trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
+                trend_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae})
+                self.plot_trend(data=data, x_label="years", y_label=feature, trend_prediction=trend_prediction, stk_id=stk_id, filename=start_end )    
+            rolling_trends = pd.concat([rolling_trends, pd.DataFrame({**trend_result}, index=[start_end])])
+        rolling_trends.to_csv(os.path.join(self.trend_folder, 'rolling_trend.csv'))
+        
+        return rolling_trends
     
     def load_data(self, stk_id:str) -> LoadedData:
         
