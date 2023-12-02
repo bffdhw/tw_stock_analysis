@@ -19,7 +19,6 @@ class StockAnalizer :
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = {}
-        self.rolling_trends = {}
     
     def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str, filename:str='_'):
         
@@ -96,9 +95,7 @@ class StockAnalizer :
         profit_indicator = profit_indicator[::-1]
         profit_indicator.reset_index(drop=True, inplace=True)
         profit_indicator[ProfitIndicatorColumn.revenue_pct] = round(profit_indicator[ProfitIndicatorColumn.revenue] / profit_indicator[ProfitIndicatorColumn.revenue].head(1)[0], 2)
-        
-        profit_indicator = profit_indicator[(TREND_START_YEAR<=profit_indicator[ProfitIndicatorColumn.years]) & (profit_indicator[ProfitIndicatorColumn.years] <= TREND_END_YEAR) ].reset_index(drop=True)
-        
+        profit_indicator = profit_indicator[(TREND_START_YEAR<=profit_indicator[ProfitIndicatorColumn.years])].reset_index(drop=True)
         return profit_indicator
         
     def process_dividend_history(self, dividend_history):
@@ -158,8 +155,6 @@ class StockAnalizer :
     def get_performance(self):
         return self.performance
     
-    def get_rolling_trends(self):
-        return self.rolling_trends
     
 if __name__ == '__main__':
     

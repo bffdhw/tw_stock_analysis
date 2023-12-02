@@ -23,11 +23,11 @@ class DataType:
     
 
 class LoadedData:
-    def __init__(self, dividend_history:pd.DataFrame, profit_indicator:pd.DataFrame, balance_sheet:pd.DataFrame, daily_close:pd.DataFrame):
-        self.dividend_history = dividend_history
+    def __init__(self,  profit_indicator:pd.DataFrame): #, dividend_history:pd.DataFrame,balance_sheet:pd.DataFrame, daily_close:pd.DataFrame):
         self.profit_indicator = profit_indicator
-        self.balance_sheet = balance_sheet
-        self.daily_close = daily_close
+        # self.dividend_history = dividend_history
+        # self.balance_sheet = balance_sheet
+        # self.daily_close = daily_close
 
 class ProfitIndicatorColumn:
     years = 'years'
