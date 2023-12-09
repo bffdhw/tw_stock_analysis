@@ -13,10 +13,9 @@ class Backtester:
         self.backtest_result_path = os.path.join('./backtest')
         os.makedirs(self.backtest_result_path, exist_ok=True)
 
-
-    def init_benchmark_data(self):
+    def init_benchmark_data(self, backtest_start:str, backtest_end:str):
         self.benchmark_data = self.load_data('0050')
-        self.benchmark_data = self.process_data(data=self.benchmark_data)
+        self.benchmark_data = self.process_data(data=self.benchmark_data, backtest_start=backtest_start, backtest_end=backtest_end)
         
         first_day_price = self.benchmark_data['Close'].head(1).values[0]
         self.benchmark_data['benchmark_updn(%)'] = self.calculate_updn_pct(target_value=self.benchmark_data['Close'], baseline_value=first_day_price)
@@ -26,15 +25,15 @@ class Backtester:
         data_path = os.path.join(self.data_folder, 'daily_close', f'{stk_id}.csv')
         return pd.read_csv(data_path)
     
-    def process_data(self, data:pd.DataFrame) -> pd.DataFrame:
-        data = data[(BACKTEST_START_DATE <= data['Date']) & (data['Date'] <= BACKTEST_END_DATE)].reset_index(drop=True)
+    def process_data(self, data:pd.DataFrame, backtest_start:str, backtest_end:str) -> pd.DataFrame:
+        data = data[(backtest_start <= data['Date']) & (data['Date'] <= backtest_end)].reset_index(drop=True)
         data['Date'] = pd.to_datetime(data['Date']).dt.date
         return data
     
-    def buy_and_hold(self, stk_id:str) -> pd.DataFrame:
+    def buy_and_hold(self, stk_id:str, backtest_start:str, backtest_end:str) -> pd.DataFrame:
         
         target_data = self.load_data(stk_id)
-        target_data = self.process_data(data=target_data)
+        target_data = self.process_data(data=target_data, backtest_start=backtest_start, backtest_end=backtest_end)
         first_day_price = target_data['Close'].head(1).values[0]
         target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
         
@@ -43,7 +42,7 @@ class Backtester:
     
     def advanced_buy_and_hold(self, stk_id:str) -> pd.DataFrame:
         target_data = self.load_data(stk_id)
-        target_data = self.process_data(data=target_data)
+        target_data = self.process_data(data=target_data, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
         
         # strategy
         first_day_price = target_data['Close'].head(1).values[0]
@@ -98,24 +97,30 @@ class Backtester:
         return round((target_value - baseline_value)/baseline_value*100, 2)
     
     def select_good_stock(self, performance:pd.DataFrame) -> list[str]:
-        good_stock_filter = (performance['net_income(%)_slope'] > 0) & (performance['gross_profit(%)_slope'] > 0) & (performance['revenue(%)_slope'] > 0)
-        return list(performance[good_stock_filter].index)
         
-    def run_backtest(self, performance:pd.DataFrame, rolling_trends:dict[pd.DataFrame]):
-        self.init_benchmark_data()
+        result = []
+        for stk_id, trend in performance.items():
+            first_decade = trend.iloc[0]
+            if (first_decade['net_income(%)_slope'] > 0) & (first_decade['gross_profit(%)_slope'] > 0) & (first_decade['revenue(%)_slope'] > 0):
+                result.append(stk_id)
+                
+        return result
+        
+    def run_backtest(self, performance:dict[str, pd.DataFrame]):
+        self.init_benchmark_data(backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
         stk_list = self.select_good_stock(performance=performance)
         original_portfolio_profit = pd.DataFrame()
         advanced_portfolio_profit = pd.DataFrame()
         
         for stk_id in stk_list:
-            buy_and_hold_result = self.buy_and_hold(stk_id=stk_id)
+            buy_and_hold_result = self.buy_and_hold(stk_id=stk_id, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
             advanced_result = self.advanced_buy_and_hold(stk_id=stk_id)
             
             result_data = buy_and_hold_result.copy()
             result_data['advanced_updn(%)'] = list(advanced_result['updn(%)'])
             
             original_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=original_portfolio_profit, result_data=result_data, profit_column='updn(%)')
-            self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id)
+            self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id, path=self.backtest_result_path)
             advanced_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=advanced_portfolio_profit, result_data=result_data, profit_column='advanced_updn(%)')
         
         self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio')
@@ -123,7 +128,7 @@ class Backtester:
     
     def plot_portfolio_performance(self, data, title):
         data['updn(%)'] = data['updn(%)'] / len(stk_list)
-        self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title)
+        self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title, path=self.backtest_result_path)
     
     def calculate_portfolio_profit(self, portfolio_profit, result_data, profit_column):
         if portfolio_profit.empty:
@@ -134,7 +139,7 @@ class Backtester:
             portfolio_profit['updn(%)'] = portfolio_profit['updn(%)'] + result_data['updn(%)']
         return portfolio_profit
 
-    def plot_performance(self, data:pd.DataFrame, columns:list[str], title:str):
+    def plot_performance(self, data:pd.DataFrame, columns:list[str], path, title:str):
         ax = data.plot(x='Date', y = columns, rot=45, figsize=(50,30), linewidth=3)
         ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1,4,7,10]))
         ax.grid(True)
@@ -146,7 +151,7 @@ class Backtester:
         plt.setp(ax.get_xticklabels(), fontsize=30)
         plt.setp(ax.get_yticklabels(), fontsize=30)
         plt.legend(columns, fontsize="40", loc ="upper left")
-        plt.savefig(os.path.join(self.backtest_result_path, f"{title}"))
+        plt.savefig(os.path.join(path, f"{title}"))
         plt.clf()
         plt.close('all')
 
@@ -157,7 +162,6 @@ if __name__ == '__main__':
     analyzer = StockAnalizer()
     analyzer.run_analysis(stk_list=stk_list)
     performance = analyzer.get_performance()
-    rolling_trends = analyzer.get_rolling_trends()
     
     backtester = Backtester()
-    backtester.run_backtest(performance=performance, rolling_trends=rolling_trends)
+    backtester.run_backtest(performance=performance)
