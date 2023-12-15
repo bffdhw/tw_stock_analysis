@@ -19,6 +19,8 @@ class StockAnalizer :
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = {}
+        self.performance_path = os.path.join(self.data_folder, 'performance')
+        os.makedirs(self.performance_path, exist_ok=True)
     
     def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str, filename:str='_'):
         
@@ -113,9 +115,11 @@ class StockAnalizer :
             if not profit_indicator.empty:
                 self.trend_folder = os.path.abspath(f"./trend_result/{stk_id}")
                 os.makedirs(self.trend_folder, exist_ok=True)
-                
-                rolling_trends = self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
-                self.performance[stk_id] = rolling_trends
+                self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+        
+        for key, data in self.performance.items():
+            file_path = os.path.join(self.performance_path, f'{key}.csv')
+            data.to_csv(file_path, index=False)
 
     def gen_rolling_trends_line(self, stk_id:str, data:pd.DataFrame, features:list[str]):
         
@@ -127,16 +131,17 @@ class StockAnalizer :
             start = int(data["years"].head(1).values[0])
             end = int(data["years"].tail(1).values[0])
             start_end = f'{start}-{end}'
-            trend_result = {}
+            trend_result = {'stk_id':stk_id}
             
             for feature in features :
                 trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
                 trend_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae})
                 self.plot_trend(data=data, x_label="years", y_label=feature, trend_prediction=trend_prediction, stk_id=stk_id, filename=start_end )    
+            
             rolling_trends = pd.concat([rolling_trends, pd.DataFrame({**trend_result}, index=[start_end])])
+            self.performance[start_end] = pd.concat([self.performance.get(start_end, pd.DataFrame()), pd.DataFrame({**trend_result}, index=[stk_id])])
+            
         rolling_trends.to_csv(os.path.join(self.trend_folder, 'rolling_trend.csv'))
-        
-        return rolling_trends
     
     def load_data(self, stk_id:str) -> LoadedData:
         
@@ -151,9 +156,6 @@ class StockAnalizer :
             
             result[data_type] = data     
         return LoadedData(**result)
-    
-    def get_performance(self):
-        return self.performance
     
     
 if __name__ == '__main__':
