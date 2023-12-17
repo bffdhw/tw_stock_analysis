@@ -12,10 +12,12 @@ class Backtester:
         self.data_folder = os.path.abspath("./data")
         self.backtest_result_path = os.path.join('./backtest')
         os.makedirs(self.backtest_result_path, exist_ok=True)
+        self.performance_path = os.path.join(self.data_folder, 'performance')
+        self.performance = self.load_performance()
 
-    def init_benchmark_data(self, backtest_start:str, backtest_end:str):
+    def init_benchmark_data(self):
         self.benchmark_data = self.load_data('0050')
-        self.benchmark_data = self.process_data(data=self.benchmark_data, backtest_start=backtest_start, backtest_end=backtest_end)
+        self.benchmark_data = self.process_data(data=self.benchmark_data, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
         
         first_day_price = self.benchmark_data['Close'].head(1).values[0]
         self.benchmark_data['benchmark_updn(%)'] = self.calculate_updn_pct(target_value=self.benchmark_data['Close'], baseline_value=first_day_price)
@@ -37,8 +39,7 @@ class Backtester:
         first_day_price = target_data['Close'].head(1).values[0]
         target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
         
-        testing_data = pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
-        return testing_data
+        return pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
     
     def advanced_buy_and_hold(self, stk_id:str) -> pd.DataFrame:
         target_data = self.load_data(stk_id)
@@ -96,19 +97,60 @@ class Backtester:
     def calculate_updn_pct(self, target_value, baseline_value):
         return round((target_value - baseline_value)/baseline_value*100, 2)
     
-    def select_good_stock(self, performance:pd.DataFrame) -> list[str]:
-        
-        result = []
-        for stk_id, trend in performance.items():
-            first_decade = trend.iloc[0]
-            if (first_decade['net_income(%)_slope'] > 0) & (first_decade['gross_profit(%)_slope'] > 0) & (first_decade['revenue(%)_slope'] > 0):
-                result.append(stk_id)
-                
+    def select_good_stock(self, performance) -> list[str]:    
+        portfolio_filter = (performance['net_income(%)_slope'] > 0) & (performance['gross_profit(%)_slope'] > 0) & (performance['revenue(%)_slope'] > 0)
+        performance = performance[portfolio_filter]   
+        return list(performance['stk_id'])
+    
+    def generate_portfolio(self) -> list[str]:
+        result = {}
+        for backtest_year, data in self.performance.items():
+            portfolio_filter = (data['net_income(%)_slope'] > 0) & (data['gross_profit(%)_slope'] > 0) & (data['revenue(%)_slope'] > 0)
+            data = data[portfolio_filter]
+            result[backtest_year] = list(data['stk_id'])
         return result
+    
+    def dynamic_portfolio_buy_and_hold(self, dynamic_portfolio) -> pd.DataFrame:
         
-    def run_backtest(self, performance:dict[str, pd.DataFrame]):
-        self.init_benchmark_data(backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
-        stk_list = self.select_good_stock(performance=performance)
+        adjust_portfolio_year = [2012, 2017, 2022]
+        cumsum_profit = pd.DataFrame()
+        
+        for backtest_start_year in adjust_portfolio_year :
+            period_cumsum_profit = pd.DataFrame()
+            portfolio = dynamic_portfolio[backtest_start_year]
+            for stk_id in portfolio:
+                target_data = self.load_data(stk_id)
+                target_data = self.process_data(data=target_data, backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+4}-12-31')
+                first_day_price = target_data['Close'].head(1).values[0]
+                period_cumsum_profit[stk_id] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
+                
+            period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio)
+            if not cumsum_profit.empty:
+                period_cumsum_profit['portfolio'] = period_cumsum_profit['portfolio'] + cumsum_profit['portfolio'].tail(1).values[0]
+            
+            period_cumsum_profit["Date"] = target_data['Date']
+            cumsum_profit = pd.concat([cumsum_profit, period_cumsum_profit[['Date', 'portfolio']]])
+        
+        cumsum_profit = cumsum_profit.reset_index(drop=True)
+        return pd.merge(cumsum_profit, self.benchmark_data, how='right', on=['Date']).dropna()
+    
+    
+    def load_performance(self) -> dict[int, pd.DataFrame]:
+        
+        performance = {}
+        for filename in os.listdir(self.performance_path):
+            key = int(filename.split('.')[0].split('-')[1]) + 1
+            performance[key] = pd.read_csv(os.path.join(self.performance_path, filename))
+        return performance
+    
+    
+    def run_dynamic_portfolio(self):
+        dynamic_portfolio = self.generate_portfolio()
+        result = self.dynamic_portfolio_buy_and_hold(dynamic_portfolio=dynamic_portfolio)
+        self.plot_performance(data=result, columns=['portfolio', 'benchmark_updn(%)'], title='portfolio', path=self.backtest_result_path)
+    
+    def run_fixed_portfolio(self):
+        stk_list = self.select_good_stock(self.performance[2012])
         original_portfolio_profit = pd.DataFrame()
         advanced_portfolio_profit = pd.DataFrame()
         
@@ -123,11 +165,11 @@ class Backtester:
             self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id, path=self.backtest_result_path)
             advanced_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=advanced_portfolio_profit, result_data=result_data, profit_column='advanced_updn(%)')
         
-        self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio')
-        self.plot_portfolio_performance(data=advanced_portfolio_profit, title='advanced_portfolio')
+        self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio', num_stocks=len(stk_list))
+        self.plot_portfolio_performance(data=advanced_portfolio_profit, title='advanced_portfolio', num_stocks=len(stk_list))
     
-    def plot_portfolio_performance(self, data, title):
-        data['updn(%)'] = data['updn(%)'] / len(stk_list)
+    def plot_portfolio_performance(self, data, title, num_stocks):
+        data['updn(%)'] = data['updn(%)'] / num_stocks
         self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title, path=self.backtest_result_path)
     
     def calculate_portfolio_profit(self, portfolio_profit, result_data, profit_column):
@@ -146,7 +188,7 @@ class Backtester:
         ax.set_title(f"{title}",fontsize=42)
         ax.set_xlabel("Time",fontsize=38)
         ax.set_ylabel("Profit(%)",fontsize=38)
-        plt.yticks(range(0, 800, 50))
+        # plt.yticks(range(0, 800, 50))
         plt.ticklabel_format(style='plain', axis='y')
         plt.setp(ax.get_xticklabels(), fontsize=30)
         plt.setp(ax.get_yticklabels(), fontsize=30)
@@ -156,12 +198,11 @@ class Backtester:
         plt.close('all')
 
 
+    def run_backtest(self):
+        self.init_benchmark_data()
+        self.run_fixed_portfolio()
+        self.run_dynamic_portfolio()
+
 if __name__ == '__main__':
-    
-    stk_list = ['2302', '2329', '2330', '2340', '6202', '8271', '6271', '3041'] #tw_stock_id.SEMICONDUCTOR
-    analyzer = StockAnalizer()
-    analyzer.run_analysis(stk_list=stk_list)
-    performance = analyzer.get_performance()
-    
     backtester = Backtester()
-    backtester.run_backtest(performance=performance)
+    backtester.run_backtest()
