@@ -96,7 +96,7 @@ Advanced Buy and Hold Portfolio
 ![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fec1bd6c-c97e-4502-89de-8e92eb9e9056)
 The "Advanced Buy and Hold" strategy further reduces risk.
 
-## dynamic portfolio strategy
+## Dynamic Portfolio Strategy
 
 1. We assume that periodic reassessment and selection of the investment portfolio are necessary.
 2. We assume that a business cycle is completed approximately every 5 years. Therefore, starting from the initial year of backtesting, we will recalculate the growth trends for each stock every 5 years and adjust the investment portfolio accordingly.
