@@ -96,6 +96,15 @@ Advanced Buy and Hold Portfolio
 ![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fec1bd6c-c97e-4502-89de-8e92eb9e9056)
 The "Advanced Buy and Hold" strategy further reduces risk.
 
+## dynamic portfolio strategy
+
+1. We assume that periodic reassessment and selection of the investment portfolio are necessary.
+2. We assume that a business cycle is completed approximately every 5 years. Therefore, starting from the initial year of backtesting, we will recalculate the growth trends for each stock every 5 years and adjust the investment portfolio accordingly.
+3. We assume that assets will be evenly allocated among the targets within the investment portfolio.
+4. The selected investment portfolio: {"2012": [2330, 2340, 8271, 6271], "2017": [2329, 2330], "2022": [2302, 2330, 6202]}
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/e70476de-077d-4b97-aab8-1e6b57b4eef0)
+
+
 # Conclusion
 In targets with a long-term upward trend in stock prices, using the Advanced Buy and Hold strategy appears to help mitigate the volatility risk associated with the original Buy and Hold strategy, especially in situations where there is a minimal impact on the return rate.
 
@@ -105,6 +114,6 @@ Financial statement analysis, capable of selecting targets with a high probabili
 
 1. The current strategy involves backtesting with data from the previous 10 years leading up to 2012. Further validation is still needed to determine if the stock selection method is applicable for each period in a sliding window.
 2. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
-3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. In other words, there may be a potential error due to delayed financial report disclosures, leading to an overestimation of the backtested profit and loss.
-4. In the current experiment, factors such as slippage, taxes, and transaction fees have not been taken into account. Therefore, the actual profit and loss may be further adjusted downward.
+3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
+4. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
 
