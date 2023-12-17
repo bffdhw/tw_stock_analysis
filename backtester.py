@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 import os
-import tw_stock_id
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from stock_analyzer import StockAnalizer
+import json
 from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE
 
 class Backtester:
@@ -14,36 +13,28 @@ class Backtester:
         os.makedirs(self.backtest_result_path, exist_ok=True)
         self.performance_path = os.path.join(self.data_folder, 'performance')
         self.performance = self.load_performance()
+        self.dynamic_portfolio_path = os.path.join(self.backtest_result_path, 'dynamic_portfolio')
+        os.makedirs(self.dynamic_portfolio_path, exist_ok=True)
 
     def init_benchmark_data(self):
-        self.benchmark_data = self.load_data('0050')
-        self.benchmark_data = self.process_data(data=self.benchmark_data, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
-        
-        first_day_price = self.benchmark_data['Close'].head(1).values[0]
-        self.benchmark_data['benchmark_updn(%)'] = self.calculate_updn_pct(target_value=self.benchmark_data['Close'], baseline_value=first_day_price)
+        self.benchmark_data = self.process_data(stk_id='0050', backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
+        self.benchmark_data['benchmark_updn(%)'] = self.benchmark_data['updn(%)']
         self.benchmark_data = self.benchmark_data[['Date', 'benchmark_updn(%)']]
 
     def load_data(self, stk_id:str) -> pd.DataFrame:
         data_path = os.path.join(self.data_folder, 'daily_close', f'{stk_id}.csv')
         return pd.read_csv(data_path)
     
-    def process_data(self, data:pd.DataFrame, backtest_start:str, backtest_end:str) -> pd.DataFrame:
+    def process_data(self, stk_id, backtest_start:str, backtest_end:str) -> pd.DataFrame:
+        data = self.load_data(stk_id=stk_id)
         data = data[(backtest_start <= data['Date']) & (data['Date'] <= backtest_end)].reset_index(drop=True)
         data['Date'] = pd.to_datetime(data['Date']).dt.date
+        first_day_price = data['Close'].head(1).values[0]
+        data['updn(%)'] = self.calculate_updn_pct(target_value=data['Close'], baseline_value=first_day_price)
         return data
     
-    def buy_and_hold(self, stk_id:str, backtest_start:str, backtest_end:str) -> pd.DataFrame:
-        
-        target_data = self.load_data(stk_id)
-        target_data = self.process_data(data=target_data, backtest_start=backtest_start, backtest_end=backtest_end)
-        first_day_price = target_data['Close'].head(1).values[0]
-        target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
-        
-        return pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
     
-    def advanced_buy_and_hold(self, stk_id:str) -> pd.DataFrame:
-        target_data = self.load_data(stk_id)
-        target_data = self.process_data(data=target_data, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
+    def advanced_buy_and_hold(self, target_data) -> pd.DataFrame:
         
         # strategy
         first_day_price = target_data['Close'].head(1).values[0]
@@ -79,9 +70,8 @@ class Backtester:
             pnl.append(profit)
             
         target_data['cumsum'] = np.cumsum(pnl)
-        target_data['updn(%)'] = self.calculate_updn_pct(target_value=target_data['cumsum'], baseline_value=first_day_price)
-        testing_data = pd.merge(target_data, self.benchmark_data, how='left', on=['Date'])
-        return testing_data
+        target_data['advanced_updn(%)'] = self.calculate_updn_pct(target_value=target_data['cumsum'], baseline_value=first_day_price)
+        return target_data[['Date', 'advanced_updn(%)']]
     
     def calculate_drawdown(self, pnl:list[float], first_day_price:float, close_price:float, last_cost:float)-> float:
         peaks = pd.Series(np.cumsum(pnl)).expanding().max()
@@ -97,7 +87,7 @@ class Backtester:
     def calculate_updn_pct(self, target_value, baseline_value):
         return round((target_value - baseline_value)/baseline_value*100, 2)
     
-    def select_good_stock(self, performance) -> list[str]:    
+    def select_good_stock(self, performance:pd.DataFrame) -> list[str]:    
         portfolio_filter = (performance['net_income(%)_slope'] > 0) & (performance['gross_profit(%)_slope'] > 0) & (performance['revenue(%)_slope'] > 0)
         performance = performance[portfolio_filter]   
         return list(performance['stk_id'])
@@ -114,24 +104,29 @@ class Backtester:
         
         adjust_portfolio_year = [2012, 2017, 2022]
         cumsum_profit = pd.DataFrame()
+        last_period_cumsum = 0
+        portfolios = {}
         
         for backtest_start_year in adjust_portfolio_year :
             period_cumsum_profit = pd.DataFrame()
             portfolio = dynamic_portfolio[backtest_start_year]
+            portfolios[backtest_start_year] = portfolio
+            print(portfolio)
             for stk_id in portfolio:
-                target_data = self.load_data(stk_id)
-                target_data = self.process_data(data=target_data, backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+4}-12-31')
-                first_day_price = target_data['Close'].head(1).values[0]
-                period_cumsum_profit[stk_id] = self.calculate_updn_pct(target_value=target_data['Close'], baseline_value=first_day_price)
+                target_data = self.process_data(stk_id=stk_id, backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+5}-03-31')
+                period_cumsum_profit[stk_id] = target_data['updn(%)']
                 
-            period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio)
-            if not cumsum_profit.empty:
-                period_cumsum_profit['portfolio'] = period_cumsum_profit['portfolio'] + cumsum_profit['portfolio'].tail(1).values[0]
-            
+            period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio) 
+            period_cumsum_profit['portfolio'] = period_cumsum_profit['portfolio'] + last_period_cumsum
             period_cumsum_profit["Date"] = target_data['Date']
+            
             cumsum_profit = pd.concat([cumsum_profit, period_cumsum_profit[['Date', 'portfolio']]])
-        
+            last_period_cumsum = cumsum_profit['portfolio'].tail(1).values[0]
         cumsum_profit = cumsum_profit.reset_index(drop=True)
+        
+        portfolio_json_path = os.path.join(self.dynamic_portfolio_path, 'portfolios.json')
+        with open(portfolio_json_path, 'w') as json_file:
+            json.dump(portfolios, json_file)
         return pd.merge(cumsum_profit, self.benchmark_data, how='right', on=['Date']).dropna()
     
     
@@ -147,30 +142,33 @@ class Backtester:
     def run_dynamic_portfolio(self):
         dynamic_portfolio = self.generate_portfolio()
         result = self.dynamic_portfolio_buy_and_hold(dynamic_portfolio=dynamic_portfolio)
-        self.plot_performance(data=result, columns=['portfolio', 'benchmark_updn(%)'], title='portfolio', path=self.backtest_result_path)
+        self.plot_performance(data=result, columns=['portfolio', 'benchmark_updn(%)'], title='portfolio', path=self.dynamic_portfolio_path)
     
     def run_fixed_portfolio(self):
-        stk_list = self.select_good_stock(self.performance[2012])
+        stk_list = self.select_good_stock(list(self.performance.values())[0])
         original_portfolio_profit = pd.DataFrame()
         advanced_portfolio_profit = pd.DataFrame()
+        result_path = os.path.join(self.backtest_result_path, 'fixed_portfolio')
+        os.makedirs(result_path, exist_ok=True)
         
         for stk_id in stk_list:
-            buy_and_hold_result = self.buy_and_hold(stk_id=stk_id, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
-            advanced_result = self.advanced_buy_and_hold(stk_id=stk_id)
+            target_data = self.process_data(stk_id=stk_id, backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
+            buy_and_hold_result = target_data[['Date', 'updn(%)']]
+            advanced_result = self.advanced_buy_and_hold(target_data=target_data)
             
-            result_data = buy_and_hold_result.copy()
-            result_data['advanced_updn(%)'] = list(advanced_result['updn(%)'])
+            result_data = pd.merge(buy_and_hold_result, advanced_result, how='left', on=['Date'])
+            result_data = pd.merge(result_data, self.benchmark_data, how='left', on=['Date'])
+            self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id, path=result_path)
             
             original_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=original_portfolio_profit, result_data=result_data, profit_column='updn(%)')
-            self.plot_performance(data=result_data, columns=['updn(%)', 'benchmark_updn(%)', 'advanced_updn(%)'], title=stk_id, path=self.backtest_result_path)
             advanced_portfolio_profit = self.calculate_portfolio_profit(portfolio_profit=advanced_portfolio_profit, result_data=result_data, profit_column='advanced_updn(%)')
         
-        self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio', num_stocks=len(stk_list))
-        self.plot_portfolio_performance(data=advanced_portfolio_profit, title='advanced_portfolio', num_stocks=len(stk_list))
+        self.plot_portfolio_performance(data=original_portfolio_profit, title='original_portfolio', num_stocks=len(stk_list), path=result_path)
+        self.plot_portfolio_performance(data=advanced_portfolio_profit, title='advanced_portfolio', num_stocks=len(stk_list), path=result_path)
     
-    def plot_portfolio_performance(self, data, title, num_stocks):
+    def plot_portfolio_performance(self, data, title, num_stocks, path):
         data['updn(%)'] = data['updn(%)'] / num_stocks
-        self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title, path=self.backtest_result_path)
+        self.plot_performance(data=data, columns=['updn(%)', 'benchmark_updn(%)'], title=title, path=path)
     
     def calculate_portfolio_profit(self, portfolio_profit, result_data, profit_column):
         if portfolio_profit.empty:

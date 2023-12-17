@@ -160,7 +160,7 @@ class StockAnalizer :
     
 if __name__ == '__main__':
     
-    stk_list = ['2330']#tw_stock_id.SEMICONDUCTOR
+    stk_list = tw_stock_id.SEMICONDUCTOR
     analyzer = StockAnalizer()
     analyzer.run_analysis(stk_list=stk_list)
     
