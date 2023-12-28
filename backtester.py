@@ -103,31 +103,42 @@ class Backtester:
     def dynamic_portfolio_buy_and_hold(self, dynamic_portfolio) -> pd.DataFrame:
         
         adjust_portfolio_year = [2012, 2017, 2022]
-        cumsum_profit = pd.DataFrame()
-        last_period_cumsum = 0
         portfolios = {}
+        cumsum_profit = pd.DataFrame()
+        advanced_cumsum_profit = pd.DataFrame()
+        last_period_cumsum = 0
+        last_advanced_period_cumsum = 0
         
         for backtest_start_year in adjust_portfolio_year :
             period_cumsum_profit = pd.DataFrame()
+            period_advanced_cumsum_profit = pd.DataFrame()
             portfolio = dynamic_portfolio[backtest_start_year]
             portfolios[backtest_start_year] = portfolio
             print(portfolio)
+            
             for stk_id in portfolio:
                 target_data = self.process_data(stk_id=stk_id, backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+5}-03-31')
                 period_cumsum_profit[stk_id] = target_data['updn(%)']
-                
-            period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio) 
-            period_cumsum_profit['portfolio'] = period_cumsum_profit['portfolio'] + last_period_cumsum
+                period_advanced_cumsum_profit[stk_id] = self.advanced_buy_and_hold(target_data=target_data)['advanced_updn(%)']
+            
+            period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio) + last_period_cumsum
+            period_cumsum_profit['advanced_portfolio'] = period_advanced_cumsum_profit.sum(axis=1) / len(portfolio) + last_advanced_period_cumsum
             period_cumsum_profit["Date"] = target_data['Date']
             
             cumsum_profit = pd.concat([cumsum_profit, period_cumsum_profit[['Date', 'portfolio']]])
             last_period_cumsum = cumsum_profit['portfolio'].tail(1).values[0]
+            advanced_cumsum_profit = pd.concat([advanced_cumsum_profit, period_cumsum_profit[['Date', 'advanced_portfolio']]])
+            last_advanced_period_cumsum = advanced_cumsum_profit['advanced_portfolio'].tail(1).values[0]
         cumsum_profit = cumsum_profit.reset_index(drop=True)
+        advanced_cumsum_profit = advanced_cumsum_profit.reset_index(drop=True)
         
         portfolio_json_path = os.path.join(self.dynamic_portfolio_path, 'portfolios.json')
         with open(portfolio_json_path, 'w') as json_file:
             json.dump(portfolios, json_file)
-        return pd.merge(cumsum_profit, self.benchmark_data, how='right', on=['Date']).dropna()
+        
+        result = pd.merge(cumsum_profit, advanced_cumsum_profit, how='right', on=['Date']).dropna()
+        result = pd.merge(result, self.benchmark_data, how='right', on=['Date']).dropna()
+        return result
     
     
     def load_performance(self) -> dict[int, pd.DataFrame]:
@@ -142,7 +153,7 @@ class Backtester:
     def run_dynamic_portfolio(self):
         dynamic_portfolio = self.generate_portfolio()
         result = self.dynamic_portfolio_buy_and_hold(dynamic_portfolio=dynamic_portfolio)
-        self.plot_performance(data=result, columns=['portfolio', 'benchmark_updn(%)'], title='portfolio', path=self.dynamic_portfolio_path)
+        self.plot_performance(data=result, columns=['portfolio', 'advanced_portfolio','benchmark_updn(%)'], title='portfolio', path=self.dynamic_portfolio_path)
     
     def run_fixed_portfolio(self):
         stk_list = self.select_good_stock(list(self.performance.values())[0])
