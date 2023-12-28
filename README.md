@@ -101,8 +101,12 @@ The "Advanced Buy and Hold" strategy further reduces risk.
 1. We assume that periodic reassessment and selection of the investment portfolio are necessary.
 2. We assume that a business cycle is completed approximately every 5 years. Therefore, starting from the initial year of backtesting, we will recalculate the growth trends for each stock every 5 years and adjust the investment portfolio accordingly.
 3. We assume that assets will be evenly allocated among the targets within the investment portfolio.
-4. The selected investment portfolio: {"2012": [2330, 2340, 8271, 6271], "2017": [2329, 2330], "2022": [2302, 2330, 6202]}
-![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/e70476de-077d-4b97-aab8-1e6b57b4eef0)
+4. The selected investment portfolio:
+   ### 2012 : 2330, 2340, 6271, 8271
+   ### 2017 : 2303, 2330, 2329, 2458, 2344, 3583, 8150, 2449, 2379, 2351, 3413, 3006, 6257
+   ### 2022 : 2303, 4952, 8081, 2330, 5471, 2436, 2458, 6239, 5285, 3592, 3443, 2344, 3583, 8150, 8016, 4967, 3034, 3532, 2449, 4961, 3016, 2302, 2379, 3545, 5222, 6202, 3014, 2351, 2388, 2441, 3413, 3006, 4968, 3661, 8261, 2408, 2337, 5269, 2338
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/f6775846-bb62-4acb-90c8-4f6a55c16514)
+
 
 
 # Conclusion
