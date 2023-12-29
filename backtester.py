@@ -136,8 +136,8 @@ class Backtester:
         with open(portfolio_json_path, 'w') as json_file:
             json.dump(portfolios, json_file)
         
-        result = pd.merge(cumsum_profit, advanced_cumsum_profit, how='right', on=['Date']).dropna()
-        result = pd.merge(result, self.benchmark_data, how='right', on=['Date']).dropna()
+        result = pd.merge(cumsum_profit, advanced_cumsum_profit, how='left', on=['Date']).dropna()
+        result = pd.merge(result, self.benchmark_data, how='left', on=['Date']).dropna()
         return result
     
     
@@ -187,7 +187,7 @@ class Backtester:
             portfolio_profit['updn(%)'] = result_data[profit_column]
             portfolio_profit['benchmark_updn(%)'] = result_data['benchmark_updn(%)']
         else:
-            portfolio_profit['updn(%)'] = portfolio_profit['updn(%)'] + result_data['updn(%)']
+            portfolio_profit['updn(%)'] = portfolio_profit['updn(%)'] + result_data[profit_column]
         return portfolio_profit
 
     def plot_performance(self, data:pd.DataFrame, columns:list[str], path, title:str):
