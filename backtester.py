@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import json
+import copy
 from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE
 
 class Backtester:
@@ -97,8 +98,49 @@ class Backtester:
         for backtest_year, data in self.performance.items():
             portfolio_filter = (data['net_income(%)_slope'] > 0) & (data['gross_profit(%)_slope'] > 0) & (data['revenue(%)_slope'] > 0)
             data = data[portfolio_filter]
-            result[backtest_year] = list(data['stk_id'])
+            result[backtest_year] = self.select_top_n(data=copy.deepcopy(data))
         return result
+    
+    def select_top_n(self, data):
+        data['sum_slope'] = data['net_income(%)_slope'] + data['gross_profit(%)_slope'] + data['revenue(%)_slope']
+        data['sum_mae'] = data['net_income(%)_mae'] + data['gross_profit(%)_mae'] + data['revenue(%)_mae']
+        data = data[['stk_id', 'sum_slope', 'sum_mae']]
+        fonts = self.non_dominated_sort(df=data)
+        return fonts[0]
+    
+    def non_dominated_sort(self, df):
+        dominating_count = {stk_id: 0 for stk_id in df['stk_id']}
+        dominated_solutions = {stk_id: [] for stk_id in df['stk_id']}
+
+        for i in range(len(df)):
+            for j in range(i + 1, len(df)):
+                # Check if i dominates j
+                is_dominated = df.iloc[i]['sum_slope'] >= df.iloc[j]['sum_slope'] and df.iloc[i]['sum_mae'] <= df.iloc[j]['sum_mae']
+                # Check if j dominates i
+                is_dominating = df.iloc[i]['sum_slope'] <= df.iloc[j]['sum_slope'] and df.iloc[i]['sum_mae'] >= df.iloc[j]['sum_mae']
+
+                if is_dominated:
+                    dominating_count[df.iloc[j]['stk_id']] += 1
+                    dominated_solutions[df.iloc[i]['stk_id']].append(df.iloc[j]['stk_id'])
+                elif is_dominating:
+                    dominating_count[df.iloc[i]['stk_id']] += 1
+                    dominated_solutions[df.iloc[j]['stk_id']].append(df.iloc[i]['stk_id'])
+
+        fronts = []
+        current_front = [stk_id for stk_id, count in dominating_count.items() if count == 0]
+
+        while current_front:
+            fronts.append(current_front)
+            next_front = []
+            for stk_id in current_front:
+                for dominated_stk_id in dominated_solutions[stk_id]:
+                    dominating_count[dominated_stk_id] -= 1
+                    if dominating_count[dominated_stk_id] == 0:
+                        next_front.append(dominated_stk_id)
+            current_front = next_front
+
+        return fronts
+    
     
     def dynamic_portfolio_buy_and_hold(self, dynamic_portfolio) -> pd.DataFrame:
         
