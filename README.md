@@ -78,7 +78,7 @@ Even when filtering stocks with a long-term downward trend, losses can be mitiga
 ![3041](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/24043e03-a6e1-4991-842f-5b128627d91b)
 
 ## Advanced Buy And Hold Strategy Portfolio
-![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/333ded73-0866-43bc-926c-bc454167787c)
+
 
 
 ## Using Increased Revenue as a Filtering Criterion
@@ -93,7 +93,7 @@ Original Buy and Hold Portfolio
 ![original_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/b1245c96-cdf3-48b1-94f9-e4944240684b)
 
 Advanced Buy and Hold Portfolio
-![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/fec1bd6c-c97e-4502-89de-8e92eb9e9056)
+![advanced_portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/41ad8978-babe-4406-8d4d-2d455358adfc)
 The "Advanced Buy and Hold" strategy further reduces risk.
 
 ## Dynamic Portfolio Strategy
