@@ -156,16 +156,41 @@ class Backtester:
             period_advanced_cumsum_profit = pd.DataFrame()
             portfolio = dynamic_portfolio[backtest_start_year]
             portfolios[backtest_start_year] = portfolio
+            
+            period_performance_path = os.path.join(self.dynamic_portfolio_path, f'{backtest_start_year}')
+            os.makedirs(period_performance_path, exist_ok=True)
             print(portfolio)
+            
+            benchmark_data = self.process_data(stk_id='0050', backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+5}-03-31')
+            benchmark_data = benchmark_data[['Date', 'updn(%)']]
+            benchmark_data.columns = ['Date','benchmark_updn(%)']
             
             for stk_id in portfolio:
                 target_data = self.process_data(stk_id=stk_id, backtest_start=f'{backtest_start_year}-04-01', backtest_end=f'{backtest_start_year+5}-03-31')
-                period_cumsum_profit[stk_id] = target_data['updn(%)']
-                period_advanced_cumsum_profit[stk_id] = self.advanced_buy_and_hold(target_data=target_data)['advanced_updn(%)']
+                
+                updn = target_data['updn(%)']
+                advanced_updn = self.advanced_buy_and_hold(target_data=target_data)['advanced_updn(%)']
+                period_cumsum_profit[stk_id] = updn
+                period_advanced_cumsum_profit[stk_id] = advanced_updn
+                
+                # plot stock performance
+                period_stock_performance = pd.DataFrame()
+                period_stock_performance['updn(%)'] = updn
+                period_stock_performance['advanced_updn(%)'] = advanced_updn
+                period_stock_performance['Date'] = target_data['Date']
+                period_stock_performance = pd.merge(period_stock_performance, benchmark_data, how='left', on=['Date']).dropna()
+                self.plot_performance(data=period_stock_performance, columns=['updn(%)' , 'advanced_updn(%)', 'benchmark_updn(%)'], title=f'{stk_id}', path=period_performance_path)
             
             period_cumsum_profit['portfolio'] = period_cumsum_profit.sum(axis=1) / len(portfolio) + last_period_cumsum
             period_cumsum_profit['advanced_portfolio'] = period_advanced_cumsum_profit.sum(axis=1) / len(portfolio) + last_advanced_period_cumsum
             period_cumsum_profit["Date"] = target_data['Date']
+            period_cumsum_profit = pd.merge(period_cumsum_profit, benchmark_data, how='left', on=['Date']).dropna()
+            
+            # plot period performance
+            plot_data = copy.deepcopy(period_cumsum_profit)
+            plot_data['portfolio'] = plot_data['portfolio'] - last_period_cumsum
+            plot_data['advanced_portfolio'] = plot_data['advanced_portfolio'] - last_advanced_period_cumsum
+            self.plot_performance(data=plot_data, columns=['portfolio' , 'advanced_portfolio', 'benchmark_updn(%)'], title='period_portfolio', path=period_performance_path)
             
             cumsum_profit = pd.concat([cumsum_profit, period_cumsum_profit[['Date', 'portfolio']]])
             last_period_cumsum = cumsum_profit['portfolio'].tail(1).values[0]
