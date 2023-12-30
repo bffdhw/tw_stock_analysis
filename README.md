@@ -133,9 +133,9 @@ In targets with a long-term upward trend in stock prices, using the Advanced Buy
 Financial statement analysis, capable of selecting targets with a high probability of long-term growth, aligns well with the scenario for employing the Advanced Buy and Hold strategy. Even in the selection of stocks with a long-term decline, losses can be reduced through the use of a stop-loss mechanism.
 
 # Potential Risks and Areas for Improvement
+1. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
 
-1. The current strategy involves backtesting with data from the previous 10 years leading up to 2012. Further validation is still needed to determine if the stock selection method is applicable for each period in a sliding window.
-2. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
-3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
-4. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
+# Other considerations to note
+1. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
+2. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
 
