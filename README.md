@@ -107,6 +107,24 @@ The "Advanced Buy and Hold" strategy further reduces risk.
    ### 2022 : 2303, 4952, 8081, 2330, 5471, 2436, 2458, 6239, 5285, 3592, 3443, 2344, 3583, 8150, 8016, 4967, 3034, 3532, 2449, 4961, 3016, 2302, 2379, 3545, 5222, 6202, 3014, 2351, 2388, 2441, 3413, 3006, 4968, 3661, 8261, 2408, 2337, 5269, 2338
 ![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/f6775846-bb62-4acb-90c8-4f6a55c16514)
 
+## Utilize the non-dominated sorting method
+
+In this study, simple regression is employed to predict trends in the financial data of individual stocks. A higher slope of the simple regression line indicates a greater expected magnitude of financial performance growth for the company. On the other hand, Mean Absolute Error (MAE) is utilized as the loss function to assess the accuracy of trend predictions, with a larger MAE indicating a less accurate prediction.
+
+Therefore, under the assumption of the effectiveness of the simple regression method, it is a reasonable choice to pursue the maximization of the slope of the simple regression line and the minimization of MAE, that is the position of the orange points in the diagram below.
+
+If the trend line slope of a particular stock is greater than that of other assets and its MAE is smaller than others, we can say that it "Dominates" the other assets, indicating that its performance is absolutely better than the others. And when several stocks each have their own victories in terms of slope and MAE, this study considers that these stocks should be regarded as equally good. In other words, the orange points simultaneously dominate the blue points and the red points, while the orange points do not dominate each other.
+
+In this study, we select points on the red curve (also known as the Pareto frontier) to mitigate the potential issue of having an excessive number of stocks in the investment portfolio.
+
+![圖片2](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/3fced950-11a1-4ea2-ad91-cda637f2bced)
+
+### Selected investment portfolio:
+2012 : 2330, 6271, 8271  
+2017 : 2330, 2344, 3583, 2379, 2351  
+2022 : 2330, 3443, 3583, 5222, 3014, 2388, 2337, 5269  
+
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/d6c8ea16-ce6e-4997-bbcc-998f78c34388)
 
 
 # Conclusion
@@ -115,9 +133,9 @@ In targets with a long-term upward trend in stock prices, using the Advanced Buy
 Financial statement analysis, capable of selecting targets with a high probability of long-term growth, aligns well with the scenario for employing the Advanced Buy and Hold strategy. Even in the selection of stocks with a long-term decline, losses can be reduced through the use of a stop-loss mechanism.
 
 # Potential Risks and Areas for Improvement
+1. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
 
-1. The current strategy involves backtesting with data from the previous 10 years leading up to 2012. Further validation is still needed to determine if the stock selection method is applicable for each period in a sliding window.
-2. Currently, the strategy is only being tested in the semiconductor industry. In the future, it will be necessary to apply it to various other industries to validate the robustness of the strategy.
-3. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
-4. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
+# Other considerations to note
+1. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
+2. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
 
