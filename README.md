@@ -120,9 +120,9 @@ In this study, we select points on the red curve (also known as the Pareto front
 ![圖片2](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/3fced950-11a1-4ea2-ad91-cda637f2bced)
 
 ### Selected investment portfolio:
-2012 : 2330, 6271, 8271
-2017 : 2330, 2344, 3583, 2379, 2351
-2022 : 2330, 3443, 3583, 5222, 3014, 2388, 2337, 5269
+2012 : 2330, 6271, 8271 "\n"
+2017 : 2330, 2344, 3583, 2379, 2351 "\n"
+2022 : 2330, 3443, 3583, 5222, 3014, 2388, 2337, 5269 "\n"
 
 ![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/d6c8ea16-ce6e-4997-bbcc-998f78c34388)
 
