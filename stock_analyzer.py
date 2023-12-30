@@ -93,12 +93,15 @@ class StockAnalizer :
         profit_indicator = profit_indicator[PROFIT_RAW_DATA_COLUMNS]
         profit_indicator = self.drop_no_value_rows(data=profit_indicator)
         
-        # sort data by year in descending order
-        profit_indicator = profit_indicator[::-1]
-        profit_indicator.reset_index(drop=True, inplace=True)
-        profit_indicator[ProfitIndicatorColumn.revenue_pct] = round(profit_indicator[ProfitIndicatorColumn.revenue] / profit_indicator[ProfitIndicatorColumn.revenue].head(1)[0], 2)
-        profit_indicator = profit_indicator[(TREND_START_YEAR<=profit_indicator[ProfitIndicatorColumn.years])].reset_index(drop=True)
-        return profit_indicator
+        if not profit_indicator.empty:
+            # sort data by year in descending order
+            profit_indicator = profit_indicator[::-1]
+            profit_indicator.reset_index(drop=True, inplace=True)
+            profit_indicator[ProfitIndicatorColumn.revenue_pct] = round(profit_indicator[ProfitIndicatorColumn.revenue] / profit_indicator[ProfitIndicatorColumn.revenue].head(1)[0], 2)
+            profit_indicator = profit_indicator[(TREND_START_YEAR<=profit_indicator[ProfitIndicatorColumn.years])].reset_index(drop=True)
+            return profit_indicator
+        else:
+            return pd.DataFrame()
         
     def process_dividend_history(self, dividend_history):
         dividend_history.drop(dividend_history[dividend_history["cash_dividend_yield(%)"] == "-"].index, inplace = True)
@@ -160,7 +163,7 @@ class StockAnalizer :
     
 if __name__ == '__main__':
     
-    stk_list = tw_stock_id.SEMICONDUCTOR
+    stk_list = tw_stock_id.COMPUTER_PERIPHERALS
     analyzer = StockAnalizer()
     analyzer.run_analysis(stk_list=stk_list)
     
