@@ -107,6 +107,7 @@ class GoodinfoClient:
         time.sleep(8)
     
     def get_raw_data(self, stk_list:list[str]):
+        self.count = 0
         
         for stk_id in stk_list : 
             dividend_history_exists = os.path.exists(os.path.join(self.data_folder, DIVIDEND_HISTORY, f'{stk_id}.csv'))
@@ -116,6 +117,11 @@ class GoodinfoClient:
             if not dividend_history_exists : self.get_dividend_history(stk_id=stk_id)
             if not balance_sheet_exists : self.get_balance_sheet(stk_id=stk_id)
             if not profit_indicator_exists : self.get_profit_indicator(stk_id=stk_id)
+            
+            if self.count == 5:
+                time.sleep(300)
+                self.count = 0
+            self.count += 1
                 
                
 if __name__ ==  "__main__" :
