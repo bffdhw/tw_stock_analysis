@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import tw_stock_id
+import concurrent.futures
 from sklearn.linear_model import LinearRegression
 from common import (
     TREND_START_YEAR, TREND_END_YEAR, DataType, LoadedData, BALANCE_FEATURES, 
@@ -13,7 +15,7 @@ from common import (
 DATA_LIST = [DataType.profit_indicator]
 ROLLING_WINDOW_SIZE = 10
 
-class StockAnalizer :
+class StockAnalyzer :
     
     def __init__(self, industry:str):
         self.data_folder = os.path.abspath("./data")
@@ -108,24 +110,6 @@ class StockAnalizer :
         dividend_history.drop(dividend_history[dividend_history["cash_dividend_yield(%)"] == "-"].index, inplace = True)
         dividend_history = dividend_history[["years","cash_dividend_yield(%)"]].astype(float).round(2)
         return dividend_history
-    
-    def run_analysis(self):
-
-        stk_list = STK_LIST[industry]
-        
-        for stk_id in stk_list :     
-            print(stk_id)
-            loaded_data = self.load_data(stk_id=stk_id)
-            profit_indicator = self.process_profit_indicator(profit_indicator=loaded_data.profit_indicator.copy())
-            
-            if not profit_indicator.empty:
-                self.trend_folder = os.path.abspath(f"./trend_result/{stk_id}")
-                os.makedirs(self.trend_folder, exist_ok=True)
-                self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
-        
-        for key, data in self.performance.items():
-            file_path = os.path.join(self.performance_path, f'{key}.csv')
-            data.to_csv(file_path, index=False)
 
     def gen_rolling_trends_line(self, stk_id:str, data:pd.DataFrame, features:list[str]):
         
@@ -164,8 +148,35 @@ class StockAnalizer :
         return LoadedData(**result)
     
     
+    def process_stk(self, stk_id):
+        print(stk_id)
+        loaded_data = self.load_data(stk_id=stk_id)
+        profit_indicator = self.process_profit_indicator(profit_indicator=loaded_data.profit_indicator.copy())
+        
+        if not profit_indicator.empty:
+            self.trend_folder = os.path.abspath(f"./trend_result/{stk_id}")
+            os.makedirs(self.trend_folder, exist_ok=True)
+            self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+
+    def run_analysis_for_stk_list(self, stk_list):
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # submit tasks for each stk_id
+            futures = [executor.submit(self.process_stk, stk_id) for stk_id in stk_list]
+
+        # wait for all tasks to complete
+        concurrent.futures.wait(futures)
+
+    def run_analysis(self):
+        stk_list = STK_LIST[self.industry]
+        self.run_analysis_for_stk_list(stk_list)
+
+        for key, data in self.performance.items():
+            file_path = os.path.join(self.performance_path, f'{key}.csv')
+            data.to_csv(file_path, index=False)
+
+    
 if __name__ == '__main__':
     industry = 'electronic_components'
-    analyzer = StockAnalizer(industry=industry)
+    analyzer = StockAnalyzer(industry=industry)
     analyzer.run_analysis()
     
