@@ -8,11 +8,11 @@ import copy
 from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE, ADJUST_PORTFOLIO_YEAR, BUSINESS_CYCLE
 
 class Backtester:
-    def __init__(self):
+    def __init__(self, industry:str):
         self.data_folder = os.path.abspath("./data")
-        self.backtest_result_path = os.path.join('./backtest')
+        self.backtest_result_path = os.path.join('./backtest', industry)
         os.makedirs(self.backtest_result_path, exist_ok=True)
-        self.performance_path = os.path.join(self.data_folder, 'performance')
+        self.performance_path = os.path.join(self.data_folder, 'performance', industry)
         self.performance = self.load_performance()
         self.dynamic_portfolio_path = os.path.join(self.backtest_result_path, 'dynamic_portfolio')
         os.makedirs(self.dynamic_portfolio_path, exist_ok=True)
@@ -271,5 +271,6 @@ class Backtester:
         self.run_dynamic_portfolio()
 
 if __name__ == '__main__':
-    backtester = Backtester()
+    industry = 'electronic_components'
+    backtester = Backtester(industry=industry)
     backtester.run_backtest()

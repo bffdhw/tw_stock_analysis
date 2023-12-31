@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import tw_stock_id
 
 TREND_START_YEAR = 2002
 TREND_END_YEAR = 2011
@@ -8,6 +9,13 @@ BACKTEST_END_DATE = '2023-10-30'
 STOP_LOSS_PCT = -20
 ADJUST_PORTFOLIO_YEAR = [2012, 2017, 2022]
 BUSINESS_CYCLE = 5
+
+STK_LIST = {
+    'semiconductor' : tw_stock_id.SEMICONDUCTOR,
+    'computer_peripherals' : tw_stock_id.COMPUTER_PERIPHERALS,
+    'electronic_components' : tw_stock_id.ELECTRONIC_COMPONENTS,
+    'food' : tw_stock_id.FOOD,
+}
 
 
 BALANCE_FEATURES = ["current_ratio(%)", "quick_ratio(%)"]

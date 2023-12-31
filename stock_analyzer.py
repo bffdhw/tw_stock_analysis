@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from common import (
     TREND_START_YEAR, TREND_END_YEAR, DataType, LoadedData, BALANCE_FEATURES, 
     PROFIT_FEATURES, PROFIT_RAW_DATA_COLUMNS, BALANCE_RAW_DATA_COLUMNS, ProfitIndicatorColumn,
-    BalanceSheetColumn, TrendPrediction
+    BalanceSheetColumn, TrendPrediction, STK_LIST
 )
 
 DATA_LIST = [DataType.profit_indicator]
@@ -15,12 +15,13 @@ ROLLING_WINDOW_SIZE = 10
 
 class StockAnalizer :
     
-    def __init__(self):
+    def __init__(self, industry:str):
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = {}
-        self.performance_path = os.path.join(self.data_folder, 'performance')
+        self.performance_path = os.path.join(self.data_folder, 'performance', industry)
         os.makedirs(self.performance_path, exist_ok=True)
+        self.industry = industry
     
     def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str, filename:str='_'):
         
@@ -108,8 +109,10 @@ class StockAnalizer :
         dividend_history = dividend_history[["years","cash_dividend_yield(%)"]].astype(float).round(2)
         return dividend_history
     
-    def run_analysis(self, stk_list:list[str]):
+    def run_analysis(self):
 
+        stk_list = STK_LIST[industry]
+        
         for stk_id in stk_list :     
             print(stk_id)
             loaded_data = self.load_data(stk_id=stk_id)
@@ -162,8 +165,7 @@ class StockAnalizer :
     
     
 if __name__ == '__main__':
-    
-    stk_list = tw_stock_id.COMPUTER_PERIPHERALS
-    analyzer = StockAnalizer()
-    analyzer.run_analysis(stk_list=stk_list)
+    industry = 'electronic_components'
+    analyzer = StockAnalizer(industry=industry)
+    analyzer.run_analysis()
     
