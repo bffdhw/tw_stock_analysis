@@ -1,9 +1,9 @@
 import pandas as pd
 import os
 import time
-import tw_stock_id
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from common import STK_LIST
 
 
 BZ_PERFORMANCE_URL = 'https://goodinfo.tw/tw/StockBzPerformance.asp?STOCK_ID='
@@ -24,7 +24,7 @@ PROFIT_INDICATOR = 'profit_indicator'
 
 class GoodinfoClient:
     
-    def __init__(self) -> None:
+    def __init__(self, industry:str) -> None:
         
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
@@ -40,6 +40,8 @@ class GoodinfoClient:
         self.profit_indicator_folder = os.path.join(self.data_folder, PROFIT_INDICATOR)
         if not os.path.exists(self.profit_indicator_folder):
             os.makedirs(self.profit_indicator_folder)
+            
+        self.stk_list = STK_LIST[industry]
         
 
     def get_profit_indicator(self, stk_id):
@@ -60,7 +62,7 @@ class GoodinfoClient:
         df = df[df['years'].str.isnumeric()]
             
         df.to_csv(os.path.join(self.profit_indicator_folder, f'{stk_id}.csv'), index=False)
-        time.sleep(8)
+        time.sleep(15)
         
     def get_dividend_history(self, stk_id:list[str]):
         
@@ -106,25 +108,26 @@ class GoodinfoClient:
         df.to_csv(os.path.join(self.balance_sheet_folder, f'{stk_id}.csv'), index=False)
         time.sleep(8)
     
-    def get_raw_data(self, stk_list:list[str]):
-        self.count = 0
+    def get_raw_data(self):
         
-        for stk_id in stk_list : 
-            dividend_history_exists = os.path.exists(os.path.join(self.data_folder, DIVIDEND_HISTORY, f'{stk_id}.csv'))
-            balance_sheet_exists = os.path.exists(os.path.join(self.data_folder, BALANCE_SHEET, f'{stk_id}.csv'))
+        # self.count = 0
+        
+        for stk_id in self.stk_list : 
+            # dividend_history_exists = os.path.exists(os.path.join(self.data_folder, DIVIDEND_HISTORY, f'{stk_id}.csv'))
+            # balance_sheet_exists = os.path.exists(os.path.join(self.data_folder, BALANCE_SHEET, f'{stk_id}.csv'))
             profit_indicator_exists = os.path.exists(os.path.join(self.data_folder, PROFIT_INDICATOR, f'{stk_id}.csv'))
             
-            if not dividend_history_exists : self.get_dividend_history(stk_id=stk_id)
-            if not balance_sheet_exists : self.get_balance_sheet(stk_id=stk_id)
+            # if not dividend_history_exists : self.get_dividend_history(stk_id=stk_id)
+            # if not balance_sheet_exists : self.get_balance_sheet(stk_id=stk_id)
             if not profit_indicator_exists : self.get_profit_indicator(stk_id=stk_id)
             
-            if self.count == 5:
-                time.sleep(300)
-                self.count = 0
-            self.count += 1
+            # if self.count == 10:
+            #     time.sleep(300)
+            #     self.count = 0
+            # self.count += 1
                 
                
 if __name__ ==  "__main__" :
-    stk_list = tw_stock_id.SEMICONDUCTOR
+    industry = 'electronic_components'
     client = GoodinfoClient()
-    client.get_raw_data(stk_list=stk_list)
+    client.get_raw_data(industry=industry)
