@@ -1,11 +1,7 @@
-import concurrent.futures
 from goodinfo_client import GoodinfoClient
 from yahoo_finance_client import YahooFinanceClient
 from stock_analyzer import StockAnalyzer
 from backtester import Backtester
-from multiprocessing import Manager
-
-
 
 if __name__ == '__main__':
     
