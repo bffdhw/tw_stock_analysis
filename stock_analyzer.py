@@ -129,9 +129,9 @@ class StockAnalyzer :
                 self.plot_trend(data=data, x_label="years", y_label=feature, trend_prediction=trend_prediction, stk_id=stk_id, filename=start_end )    
             
             rolling_trends = pd.concat([rolling_trends, pd.DataFrame({**trend_result}, index=[start_end])])
-            self.performance[start_end] = pd.concat([self.performance.get(start_end, pd.DataFrame()), pd.DataFrame({**trend_result}, index=[stk_id])])
             
         rolling_trends.to_csv(os.path.join(self.trend_folder, 'rolling_trend.csv'))
+        return rolling_trends
     
     def load_data(self, stk_id:str) -> LoadedData:
         
@@ -156,7 +156,10 @@ class StockAnalyzer :
         if not profit_indicator.empty:
             self.trend_folder = os.path.abspath(f"./trend_result/{stk_id}")
             os.makedirs(self.trend_folder, exist_ok=True)
-            self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+            rolling_trends = self.gen_rolling_trends_line(stk_id=stk_id, data=profit_indicator, features=PROFIT_FEATURES)
+            return rolling_trends
+        else:
+            return pd.DataFrame()
 
     def run_analysis_for_stk_list(self, stk_list):
         with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -165,16 +168,33 @@ class StockAnalyzer :
 
         # wait for all tasks to complete
         concurrent.futures.wait(futures)
+        return futures
 
-    def run_analysis(self):
-        stk_list = STK_LIST[self.industry]
-        self.run_analysis_for_stk_list(stk_list)
-
-        for key, data in self.performance.items():
+    def parse_performance(self, futures):
+        
+        performance = {}
+        # collect the results
+        for future in futures:
+            rolling_trends = future.result()
+            for start_end, data in rolling_trends.iterrows():
+                period_performance = performance.get(start_end, pd.DataFrame())
+                stk_performance = pd.DataFrame({**data}, index=[0])
+                performance[start_end] = pd.concat([period_performance, stk_performance])
+        return performance
+        
+    def save_performance(self, performance):
+        for key, data in performance.items():
             file_path = os.path.join(self.performance_path, f'{key}.csv')
             data.to_csv(file_path, index=False)
 
     
+    def run_analysis(self):
+        if not os.listdir(self.performance_path):
+            stk_list = STK_LIST[self.industry]
+            futures = self.run_analysis_for_stk_list(stk_list)
+            performance = self.parse_performance(futures=futures)
+            self.save_performance(performance=performance)
+
 if __name__ == '__main__':
     industry = 'electronic_components'
     analyzer = StockAnalyzer(industry=industry)
