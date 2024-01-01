@@ -93,20 +93,25 @@ class Backtester:
         return list(performance['stk_id'])
     
     def generate_portfolio(self) -> dict[list[str]]:
-        result = {}
+        overall_portfolio = {}
+        non_dominate_portfolio = {}
+        
         for backtest_year, data in self.performance.items():
             portfolio_filter = (data['net_income(%)_slope'] > 0) & (data['gross_profit(%)_slope'] > 0) & (data['revenue(%)_slope'] > 0)
-            portfolio = self.select_top_n(data=copy.deepcopy(data[portfolio_filter]))
-            result[backtest_year] = portfolio
+            overall_portfolio[backtest_year] = list(data[portfolio_filter]['stk_id'].astype(str))
+            non_dominate_portfolio[backtest_year] = self.select_top_n(data=copy.deepcopy(data[portfolio_filter]))
+            
+        overall_portfolio = {key: overall_portfolio[key] for key in ADJUST_PORTFOLIO_YEAR if key in overall_portfolio}
+        self.gen_portfolio_json(data=overall_portfolio, filename='over_all_portfolio')
         
-        self.gen_portfolio_json(data=result)    
-        return result
+        non_dominate_portfolio = {key: non_dominate_portfolio[key] for key in ADJUST_PORTFOLIO_YEAR if key in non_dominate_portfolio}
+        self.gen_portfolio_json(data=non_dominate_portfolio, filename='non_dominate_portfolio')
+        return non_dominate_portfolio
     
-    def gen_portfolio_json(self, data:dict[list[str]]):
-        result = {key: data[key] for key in ADJUST_PORTFOLIO_YEAR if key in data}
-        portfolio_json_path = os.path.join(self.dynamic_portfolio_path, 'portfolios.json')
+    def gen_portfolio_json(self, data:dict[list[str]], filename:str):
+        portfolio_json_path = os.path.join(self.dynamic_portfolio_path, f'{filename}.json')
         with open(portfolio_json_path, 'w') as json_file:
-            json.dump(result, json_file)
+            json.dump(data, json_file)
     
     def select_top_n(self, data:pd.DataFrame) -> list[str]:
         data['sum_slope'] = data['net_income(%)_slope'] + data['gross_profit(%)_slope'] + data['revenue(%)_slope']
@@ -199,6 +204,7 @@ class Backtester:
             last_advanced_period_cumsum = period_result['advanced_portfolio'].iloc[-1]
             
             result = pd.concat([result, period_result])
+        result.to_csv(os.path.join(self.dynamic_portfolio_path, 'cumsum_profit.csv'), index=False)
         return pd.merge(result, self.benchmark_data, how='left', on=['Date']).dropna()
     
     
