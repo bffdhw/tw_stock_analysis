@@ -12,10 +12,13 @@ class Backtester:
         self.data_folder = os.path.abspath("./data")
         self.backtest_result_path = os.path.join('./backtest', industry)
         os.makedirs(self.backtest_result_path, exist_ok=True)
-        self.performance_path = os.path.join(self.data_folder, 'performance', industry)
-        self.performance = self.load_performance()
         self.dynamic_portfolio_path = os.path.join(self.backtest_result_path, 'dynamic_portfolio')
         os.makedirs(self.dynamic_portfolio_path, exist_ok=True)
+        self.industry = industry
+
+    def init(self):
+        self.performance_path = os.path.join(self.data_folder, 'performance', self.industry)
+        self.performance = self.load_performance()
 
     def init_benchmark_data(self):
         self.benchmark_data = self.process_data(stk_id='0050', backtest_start=BACKTEST_START_DATE, backtest_end=BACKTEST_END_DATE)
@@ -266,6 +269,7 @@ class Backtester:
 
 
     def run_backtest(self):
+        self.init()
         self.init_benchmark_data()
         self.run_fixed_portfolio()
         self.run_dynamic_portfolio()
