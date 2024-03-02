@@ -127,6 +127,39 @@ In this study, we select points on the red curve (also known as the Pareto front
 ![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/d6c8ea16-ce6e-4997-bbcc-998f78c34388)
 
 
+# Verification of significance
+## Description
+The research above is based on a linear regression analysis using fundamental data. However, there is one issue that needs to be addressed: after conducting the linear regression analysis, we need to confirm its significance to determine if the trend observed is statistically meaningful.    
+
+However, when analyzing the significance of revenue, gross profit margin, and net profit margin simultaneously in selecting stocks based on the above research, the following issues may arise: The gross profit margin and net profit margin may not necessarily exhibit a clear "linear relationship" as observed in revenue.   
+
+Currently, this study has not reached a conclusion regarding the weighting of these three indicators. Simultaneously considering the results of linear regression analyses of these three types of data may pose challenges during the stock selection phase.   
+
+Therefore, this study decides to base its selection on the linear regression results of revenue rate, picking stocks that are statistically "significant" and exhibit a "high degree of correlation."  
+
+However, the linear regression results of gross profit margin and net profit margin will be used as auxiliary tools for manual assessment, temporarily excluded from the formalized stock selection method.  
+
+Therefore, the stock selection criteria based on the experimental results will rely on linear regression analysis of revenue and time, with the following conditions:  
+Significance (p-value < 0.05)  
+High correlation (slope > 0.5)  
+
+And each time stocks are selected under the condition of "significance," the top five stocks with the highest correlation will be chosen.  
+If no stocks meet the criteria for selection during that particular round, then 0050 (the market index) will be purchased. 
+
+## Result
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/eb13607b-08e9-4792-a1d8-59e3037c3b16)
+
+## Selected investment portfolio
+### ALL
+2012 : 2330, 2351, 2451, 2454, 2481, 6271  
+2017 : 2330, 2454, 3034, 6271  
+2022 : 2330, 2379, 2408, 2454, 3016, 3034, 3443, 3530, 3661, 4961, 4968, 5222, 6257, 8016  
+
+### TOP5
+2012 : 2481, 2330, 2454, 2451, 6271  
+2017 : 2330, 2454, 6271, 3034  
+2022 : 2330, 2454, 3530, 3034, 4961  
+
 # Conclusion
 In targets with a long-term upward trend in stock prices, using the Advanced Buy and Hold strategy appears to help mitigate the volatility risk associated with the original Buy and Hold strategy, especially in situations where there is a minimal impact on the return rate.
 
