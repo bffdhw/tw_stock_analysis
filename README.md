@@ -152,13 +152,13 @@ If no stocks meet the criteria for selection during that particular round, then 
 ## Selected investment portfolio
 ### ALL
 2012 : 2330, 2351, 2451, 2454, 2481, 6271  
-2017 : 2330, 2454, 3034, 6271
-2022 : 2330, 2379, 2408, 2454, 3016, 3034, 3443, 3530, 3661, 4961, 4968, 5222, 6257, 8016
+2017 : 2330, 2454, 3034, 6271  
+2022 : 2330, 2379, 2408, 2454, 3016, 3034, 3443, 3530, 3661, 4961, 4968, 5222, 6257, 8016  
 
 ### TOP5
-2012 : 2481, 2330, 2454, 2451, 6271
-2017 : 2330, 2454, 6271, 3034
-2022 : 2330, 2454, 3530, 3034, 4961
+2012 : 2481, 2330, 2454, 2451, 6271  
+2017 : 2330, 2454, 6271, 3034  
+2022 : 2330, 2454, 3530, 3034, 4961  
 
 # Conclusion
 In targets with a long-term upward trend in stock prices, using the Advanced Buy and Hold strategy appears to help mitigate the volatility risk associated with the original Buy and Hold strategy, especially in situations where there is a minimal impact on the return rate.
