@@ -53,10 +53,11 @@ class BalanceSheetColumn:
     stock = "stock"
 
 class TrendPrediction:
-    def __init__(self, slope, mae, prediction:np.ndarray):
+    def __init__(self, slope, mae, prediction:np.ndarray, p_value):
         self.slope = slope
         self.mae = mae
         self.prediction = prediction
+        self.p_value = p_value
 
 class TransactionCostsPct:
     commission_pct =  0.001425 * 2

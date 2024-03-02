@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import json
 import copy
+import shutil
 from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE, ADJUST_PORTFOLIO_YEAR, BUSINESS_CYCLE
 
 class Backtester:
@@ -13,7 +14,12 @@ class Backtester:
         self.backtest_result_path = os.path.join('./backtest', industry)
         os.makedirs(self.backtest_result_path, exist_ok=True)
         self.dynamic_portfolio_path = os.path.join(self.backtest_result_path, 'dynamic_portfolio')
-        os.makedirs(self.dynamic_portfolio_path, exist_ok=True)
+        
+        if os.path.exists(self.backtest_result_path) :
+            shutil.rmtree(self.backtest_result_path)
+                
+        os.makedirs(self.dynamic_portfolio_path)
+            
         self.industry = industry
 
     def init(self):
@@ -93,20 +99,22 @@ class Backtester:
         return list(performance['stk_id'])
     
     def generate_portfolio(self) -> dict[list[str]]:
-        overall_portfolio = {}
-        non_dominate_portfolio = {}
+
+        all_portfolio = {}
+        best_portfolio = {}
         
         for backtest_year, data in self.performance.items():
-            portfolio_filter = (data['net_income(%)_slope'] > 0) & (data['gross_profit(%)_slope'] > 0) & (data['revenue(%)_slope'] > 0)
-            overall_portfolio[backtest_year] = list(data[portfolio_filter]['stk_id'].astype(str))
-            non_dominate_portfolio[backtest_year] = self.select_top_n(data=copy.deepcopy(data[portfolio_filter]))
+            revenue_filter  = (data['revenue(%)_p_value'] < 0.05) & (data['revenue(%)_slope'] > 0.5)        
+            filted_data = data[revenue_filter]
+            all_portfolio[backtest_year] = list(filted_data['stk_id'])
             
-        overall_portfolio = {key: overall_portfolio[key] for key in ADJUST_PORTFOLIO_YEAR if key in overall_portfolio}
-        self.gen_portfolio_json(data=overall_portfolio, filename='over_all_portfolio')
+            filted_data = filted_data.sort_values(by='revenue(%)_slope', ascending=False)[:5]
+            best_portfolio[backtest_year] = list(filted_data['stk_id'])
         
-        non_dominate_portfolio = {key: non_dominate_portfolio[key] for key in ADJUST_PORTFOLIO_YEAR if key in non_dominate_portfolio}
-        self.gen_portfolio_json(data=non_dominate_portfolio, filename='non_dominate_portfolio')
-        return non_dominate_portfolio
+        self.gen_portfolio_json(data=all_portfolio, filename='all_portfolio')
+        self.gen_portfolio_json(data=best_portfolio, filename='best_portfolio')
+        
+        return best_portfolio
     
     def gen_portfolio_json(self, data:dict[list[str]], filename:str):
         portfolio_json_path = os.path.join(self.dynamic_portfolio_path, f'{filename}.json')
@@ -167,8 +175,8 @@ class Backtester:
             
             period_cumsum_profit = pd.DataFrame()
             period_advanced_cumsum_profit = pd.DataFrame()
-            portfolio = dynamic_portfolio[backtest_start_year]
-            print(portfolio)
+            portfolio = dynamic_portfolio[backtest_start_year] 
+            portfolio = portfolio if portfolio else ['0050']
             
             start_date = f'{backtest_start_year}-04-01'
             end_date   = f'{backtest_start_year + BUSINESS_CYCLE}-03-31'

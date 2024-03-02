@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import concurrent.futures
-from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 from common import (
     TREND_START_YEAR, TREND_END_YEAR, DataType, LoadedData, BALANCE_FEATURES, 
     PROFIT_FEATURES, PROFIT_RAW_DATA_COLUMNS, BALANCE_RAW_DATA_COLUMNS, ProfitIndicatorColumn,
@@ -49,25 +49,26 @@ class StockAnalyzer :
         plt.clf()
         plt.close('all')
     
-    def predict_trend(self, data:pd.DataFrame, x_label:str, y_label:str) -> TrendPrediction:
+    def predict_trend(self, data: pd.DataFrame, x_label: str, y_label: str) -> TrendPrediction:
     
         x = np.array(data[x_label])
         y = np.array(data[y_label])
-        x = x.reshape(-1, 1)
-        model = LinearRegression(fit_intercept=True)
-        model.fit(x, y)
+        x = sm.add_constant(x)
+        model = sm.OLS(y, x).fit()
         
-        # Interception
-        w_0 = model.intercept_
-        # Coeficient
-        slope = round(model.coef_[0], 2)
+        # Intercept
+        w_0 = model.params[0]
+        # Coefficient
+        slope = round(model.params[1], 2)
         
         prediction = model.predict(x)
         error = prediction - y
         rmse = (error**2).mean()**0.5
         mae = round(abs(error).mean(), 2)
         
-        return TrendPrediction(slope=slope, mae=mae, prediction=prediction)
+        p_value = round(model.pvalues[1], 3)
+        
+        return TrendPrediction(slope=slope, mae=mae, prediction=prediction, p_value=p_value)
     
     def process_balance_sheet(self, balance_sheet:pd.DataFrame) -> pd.DataFrame:
         
@@ -125,7 +126,7 @@ class StockAnalyzer :
             
             for feature in features :
                 trend_prediction = self.predict_trend(data=data, x_label="years", y_label=feature)
-                trend_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae})
+                trend_result.update({f'{feature}_slope' : trend_prediction.slope, f'{feature}_mae' : trend_prediction.mae, f'{feature}_p_value' : trend_prediction.p_value})
                 self.plot_trend(data=data, x_label="years", y_label=feature, trend_prediction=trend_prediction, stk_id=stk_id, filename=start_end )    
             
             rolling_trends = pd.concat([rolling_trends, pd.DataFrame({**trend_result}, index=[start_end])])
