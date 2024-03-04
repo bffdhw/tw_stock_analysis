@@ -160,6 +160,15 @@ If no stocks meet the criteria for selection during that particular round, then 
 2017 : 2330, 2454, 6271, 3034  
 2022 : 2330, 2454, 3530, 3034, 4961  
 
+
+# Add consideration for slippage
+## Description
+Due to the restricted trading hours of the Taiwan stock market from 9:00 AM to 1:30 PM on weekdays, price gaps may occur at the market open, causing stocks to open higher or lower than their previous closing prices. This practical challenge makes it difficult to precisely match the "stop-loss" price with the values set in the experimental setup. To address this issue, this study incorporates consideration for slippage, setting the cost of each "entry and exit" at 3%.
+
+## Result
+![portfolio](https://github.com/bffdhw/tw_stock_analysis/assets/34659552/31f7cf5d-589a-40d5-8471-8e0b93a344d4)
+
+
 # Conclusion
 In targets with a long-term upward trend in stock prices, using the Advanced Buy and Hold strategy appears to help mitigate the volatility risk associated with the original Buy and Hold strategy, especially in situations where there is a minimal impact on the return rate.
 
@@ -170,5 +179,4 @@ Financial statement analysis, capable of selecting targets with a high probabili
 
 # Other considerations to note
 1. Taiwanese regulations mandate that companies must disclose their annual financial report for the previous year by March 31 of the following year. However, this research's backtesting period starts on January 1. Therefore, the backtesting period for this study will be from 04/01 to 03/31.
-2. Due to the low frequency of trades in the buy-and-hold strategy, this study will neglect estimations of taxes, slippage, and transaction fees.
 
