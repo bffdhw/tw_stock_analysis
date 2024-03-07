@@ -290,9 +290,7 @@ class Backtester:
         self.run_dynamic_portfolio()
 
 if __name__ == '__main__':
-    industry = 'electronic_components'
-    backtester = Backtester(industry=industry)
-    backtester.run_backtest()
+
     
     stk_list_by_industries = get_stock_ids()
         
