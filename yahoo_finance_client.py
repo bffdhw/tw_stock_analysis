@@ -1,15 +1,15 @@
 import os
 import time
 import yfinance as yf
-from common import STK_LIST
+from common import get_stock_ids
 
 
 class YahooFinanceClient:
     
-    def __init__(self, industry:str):
+    def __init__(self, stk_list):
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
-        self.stk_list = STK_LIST[industry]
+        self.stk_list = stk_list
     
     def get_raw_daily_close(self, stk_id, daily_close_folder):
         df = yf.download(f'{stk_id}.TW')
@@ -30,6 +30,9 @@ class YahooFinanceClient:
                 time.sleep(1)
 
 if __name__ == '__main__':
-    industry = 'electronic_components'
-    client = YahooFinanceClient()
-    client.get_raw_data(industry=industry)
+    
+    stk_list_by_industries = get_stock_ids()
+        
+    for industry, stk_list in stk_list_by_industries.items():
+        client = YahooFinanceClient(stk_list=stk_list)
+        client.get_raw_data()

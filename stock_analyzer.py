@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import concurrent.futures
 import statsmodels.api as sm
 from common import (
-    TREND_START_YEAR, TREND_END_YEAR, DataType, LoadedData, BALANCE_FEATURES, 
+    TREND_START_YEAR, TREND_END_YEAR, DataType, LoadedData, 
     PROFIT_FEATURES, PROFIT_RAW_DATA_COLUMNS, BALANCE_RAW_DATA_COLUMNS, ProfitIndicatorColumn,
-    BalanceSheetColumn, TrendPrediction, STK_LIST
+    BalanceSheetColumn, TrendPrediction, get_stock_ids
 )
 
 DATA_LIST = [DataType.profit_indicator]
@@ -17,13 +17,13 @@ ROLLING_WINDOW_SIZE = 10
 
 class StockAnalyzer :
     
-    def __init__(self, industry:str):
+    def __init__(self, industry, stk_list):
         self.data_folder = os.path.abspath("./data")
         os.makedirs(self.data_folder, exist_ok=True)
         self.performance = {}
         self.performance_path = os.path.join(self.data_folder, 'performance', industry)
         os.makedirs(self.performance_path, exist_ok=True)
-        self.industry = industry
+        self.stk_list = stk_list
     
     def plot_trend(self, data:pd.DataFrame, x_label:str, y_label:str, trend_prediction:TrendPrediction, stk_id:str, filename:str='_'):
         
@@ -191,13 +191,17 @@ class StockAnalyzer :
     
     def run_analysis(self):
         if not os.listdir(self.performance_path):
-            stk_list = STK_LIST[self.industry]
+            stk_list = self.stk_list
             futures = self.run_analysis_for_stk_list(stk_list)
             performance = self.parse_performance(futures=futures)
             self.save_performance(performance=performance)
 
 if __name__ == '__main__':
-    industry = 'electronic_components'
-    analyzer = StockAnalyzer(industry=industry)
-    analyzer.run_analysis()
+  
+    stk_list_by_industries = get_stock_ids()
+        
+    for industry, stk_list in stk_list_by_industries.items():
+        print(industry)
+        analyzer = StockAnalyzer(industry=industry, stk_list=stk_list)
+        analyzer.run_analysis()
     

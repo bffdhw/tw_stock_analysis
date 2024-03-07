@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 import json
 import copy
 import shutil
-from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE, ADJUST_PORTFOLIO_YEAR, BUSINESS_CYCLE, RE_ENTRY_BUFFER_PCT, SLIPPAGE_PCT
+from common import BACKTEST_START_DATE, STOP_LOSS_PCT, BACKTEST_END_DATE, ADJUST_PORTFOLIO_YEAR, BUSINESS_CYCLE, RE_ENTRY_BUFFER_PCT, SLIPPAGE_PCT, get_stock_ids
 import matplotlib
 matplotlib.use('Agg')
 
@@ -287,10 +287,16 @@ class Backtester:
     def run_backtest(self):
         self.init()
         self.init_benchmark_data()
-        self.run_fixed_portfolio()
         self.run_dynamic_portfolio()
 
 if __name__ == '__main__':
     industry = 'electronic_components'
     backtester = Backtester(industry=industry)
     backtester.run_backtest()
+    
+    stk_list_by_industries = get_stock_ids()
+        
+    for industry, stk_list in stk_list_by_industries.items():
+        print(industry)
+        backtester = Backtester(industry=industry, stk_list=stk_list)
+        backtester.run_backtest()
